@@ -4,7 +4,7 @@ import { X, Send, Loader2, CheckCircle } from 'lucide-react';
 export default function ContactModal({ onClose }) {
   // --- CONFIGURATION ---
   // C'est ici que tu colleras ton lien n8n plus tard
-  const WEBHOOK_URL = "http://localhost:5678/webhook/contact"; 
+  const WEBHOOK_URL = "https://n8n.collectifcobalt.eu/webhook/contact"; 
 
   const [formData, setFormData] = useState({
     name: '',
