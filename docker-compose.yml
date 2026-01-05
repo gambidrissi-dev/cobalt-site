@@ -1,0 +1,25 @@
+services:
+  # --- LE SITE (FRONTEND) ---
+  cobalt-front:
+    build: .
+    container_name: cobalt-site
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+  # --- LE CMS (BACKEND) ---
+  cobalt-back:
+    build: ./cms
+    container_name: cobalt-cms
+    ports:
+      - "1337:1337"
+    volumes:
+      - ./cms:/opt/app
+      - /opt/app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
