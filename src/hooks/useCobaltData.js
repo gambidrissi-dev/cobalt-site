@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { getStrapiText } from '../utils/strapi';
 import { 
   projects as staticProjects, 
   mediaArticles as staticArticles, 
