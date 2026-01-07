@@ -11,7 +11,7 @@ export default function Footer() {
 
   useEffect(() => {
     // On suppose que tu as créé un Single Type "general-information" dans Strapi
-    fetch(`${API_URL}/api/general-informations`)
+    fetch(`${STRAPI_URL}/api/general-informations`)
       .then((res) => res.json())
       .then((data) => {
         setInfos(data.data?.attributes);
