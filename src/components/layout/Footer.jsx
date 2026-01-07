@@ -7,11 +7,11 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [infos, setInfos] = useState(null);
 
-  const API_URL = 'https://api.collectifcobalt.eu'; 
+  const STRAPI_URL = 'https://strapi.collectifcobalt.eu'; 
 
   useEffect(() => {
     // On suppose que tu as créé un Single Type "general-information" dans Strapi
-    fetch(`${STRAPI_URL}/api/general-informations`)
+    fetch(`${STRAPI_URL}/api/general-information`)
       .then((res) => res.json())
       .then((data) => {
         setInfos(data.data?.attributes);
