@@ -14,7 +14,7 @@ export default function Footer() {
     fetch(`${STRAPI_URL}/api/general-information`)
       .then((res) => res.json())
       .then((data) => {
-        setInfos(data.data?.attributes);
+        setInfos(data.data);
       })
       .catch((err) => console.error("Erreur chargement infos:", err));
   }, []);
