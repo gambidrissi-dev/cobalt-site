@@ -7,13 +7,11 @@ import {
 } from '../data/staticData';
 
 // --- CONFIGURATION ---
-// On détecte si on est en local ou en prod, ou on force ton URL
 const STRAPI_URL = "https://strapi.collectifcobalt.eu"; 
 
 // Helper pour nettoyer les URLs
 const makeUrl = (data) => {
   if (!data) return null;
-  // Gestion de la compatibilité Strapi v4/v5 (attributes ou direct)
   const attrs = data.attributes || data;
   const url = attrs?.url;
   if (!url) return null;
@@ -37,20 +35,27 @@ export const useCobaltData = () => {
       try {
         console.log("📡 Démarrage de la synchronisation Strapi...");
 
-        // --- CONSTRUCTION DE L'URL HOMEPAGE (C'est là que la magie opère) ---
-        // 1. Hero : On veut tout (*).
-        // 2. Blocks : On veut descendre dans 'cards' pour avoir l'icon.
-        // 3. Blocks : On veut descendre dans 'leftImage' pour la section Featured.
-        const homeQuery = new URLSearchParams({
-            'populate[hero][populate]': '*',
-            'populate[blocks][populate]': 'cards.icon,leftImage' 
-        }).toString();
+        // --- CONSTRUCTION DE L'URL HOMEPAGE (Version Sécurisée) ---
+        // On évite les virgules qui causent l'erreur 500. On déclare chaque besoin séparément.
+        const homeParams = new URLSearchParams();
+        
+        // 1. On veut tout le Hero
+        homeParams.append('populate[hero][populate]', '*');
+        
+        // 2. On veut tout le contenu textuel des Blocs
+        homeParams.append('populate[blocks][populate]', '*'); 
+        
+        // 3. Spécifique : On veut l'image 'leftImage' (Featured Section)
+        homeParams.append('populate[blocks][populate]', 'leftImage');
+
+        // 4. Spécifique : On descend dans les cartes pour chercher l'icône (Approche Section)
+        homeParams.append('populate[blocks][populate][cards][populate]', 'icon');
 
         const [resProjects, resArticles, resProducts, resHome] = await Promise.all([
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
-          fetch(`${STRAPI_URL}/api/homepage?${homeQuery}`), 
+          fetch(`${STRAPI_URL}/api/homepage?${homeParams.toString()}`), 
         ]);
 
         const newData = { ...data, isLoaded: true };
@@ -133,7 +138,7 @@ export const useCobaltData = () => {
                 newData.home = homeAttributes;
             }
         } else {
-            console.warn("⚠️ Echec chargement Homepage");
+            console.warn("⚠️ Echec chargement Homepage (Status " + resHome.status + ")");
         }
 
         setData(newData);
