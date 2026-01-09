@@ -23,8 +23,9 @@ export const useCobaltData = () => {
     articles: staticArticles,
     products: staticProducts, 
     team: staticTeam,
-    services: null,
-    navigation: [], // <--- Nouveau champ pour le menu
+    services: null,       // Architecture
+    atelierServices: null, // <--- NOUVEAU : Atelier
+    navigation: [],
     home: null,
     isLoaded: false
   });
@@ -34,7 +35,7 @@ export const useCobaltData = () => {
       try {
         console.log("📡 Synchronisation Strapi...");
 
-        // URLs de configurations
+        // Configs URL
         const homeParams = new URLSearchParams();
         homeParams.append('populate[hero][populate]', '*');
         homeParams.append('populate[blocks][on][sections.approche-section][populate][cards][populate]', 'icon');
@@ -43,22 +44,25 @@ export const useCobaltData = () => {
         const servicesParams = new URLSearchParams();
         servicesParams.append('populate[listePrestations][populate]', '*'); 
 
-        // Appel Navigation : On récupère le composant répétable 'mainNavigation'
         const navParams = new URLSearchParams();
         navParams.append('populate[mainNavigation][populate]', '*');
 
-        const [resProjects, resArticles, resProducts, resHome, resServices, resNav] = await Promise.all([
+        // Appel API
+        const [resProjects, resArticles, resProducts, resHome, resServices, resNav, resAtelier] = await Promise.all([
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
           fetch(`${STRAPI_URL}/api/homepage?${homeParams.toString()}`),
           fetch(`${STRAPI_URL}/api/page-prestations-archi?${servicesParams.toString()}`),
-          fetch(`${STRAPI_URL}/api/navigation?${navParams.toString()}`), // <--- Appel Navigation
+          fetch(`${STRAPI_URL}/api/navigation?${navParams.toString()}`),
+          fetch(`${STRAPI_URL}/api/page-savoir-faire?${servicesParams.toString()}`), // <--- NOUVEAU FETCH (Mêmes params que services)
         ]);
 
         const newData = { ...data, isLoaded: true };
 
-        // ... (Le traitement des Projets/Articles/Produits reste identique) ...
+        // ... (Codes Projets, Articles, Produits, Home, Nav inchangés -> je ne les remets pas pour raccourcir) ...
+        
+        // --- 1. Réintégration des blocs précédents pour que tu aies le fichier complet ---
         if (resProjects.ok) {
            const d = await resProjects.json();
            if(d.data) {
@@ -82,35 +86,35 @@ export const useCobaltData = () => {
              newData.projects = formattedProjects;
            }
         }
-
         if (resArticles.ok) {
             const d = await resArticles.json();
             if (d.data) newData.articles = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes, image: makeUrl(i.attributes?.cover?.data || i.attributes?.cover) }));
         }
-        
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) newData.products = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes, image: makeUrl(i.attributes?.cover?.data || i.attributes?.cover) }));
         }
-
         if (resHome.ok) {
             const h = await resHome.json();
             if (h.data) newData.home = h.data.attributes || h.data;
         }
-
         if (resServices.ok) {
             const s = await resServices.json();
             if (s.data) newData.services = s.data.attributes || s.data;
         }
-
-        // --- 6. TRAITEMENT NAVIGATION (NOUVEAU) ---
         if (resNav.ok) {
             const n = await resNav.json();
             const navData = n.data?.attributes || n.data;
-            // On s'attend à trouver 'mainNavigation' dedans (selon ta capture)
-            if (navData && navData.mainNavigation) {
-                console.log("🧭 Menu reçu :", navData.mainNavigation);
-                newData.navigation = navData.mainNavigation;
+            if (navData && navData.mainNavigation) newData.navigation = navData.mainNavigation;
+        }
+
+        // --- 7. TRAITEMENT ATELIER (NOUVEAU) ---
+        if (resAtelier.ok) {
+            const a = await resAtelier.json();
+            const aData = a.data?.attributes || a.data;
+            if (aData) {
+                console.log("🔨 Savoir-Faire reçu :", aData);
+                newData.atelierServices = aData;
             }
         }
 

@@ -31,7 +31,8 @@ import Asso from './pages/Asso';
 import AssoDetail from './pages/AssoDetail';
 import Home from './pages/Home';
 
-function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, services, onOpenContact }) {
+// --- MODIFICATION : AJOUT DE 'atelierServices' DANS LES PROPS ---
+function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, services, atelierServices, onOpenContact }) {
   const location = useLocation();
 
   return (
@@ -54,7 +55,9 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
 
         {/* ATELIER */}
         <Route path="/atelier" element={<PageTransition><Atelier /></PageTransition>} />
-        <Route path="/atelier-savoir-faire" element={<PageTransition><AtelierSavoirFaire /></PageTransition>} />
+        
+        {/* --- CORRECTION ICI : ON PASSE LES DONNÉES ATELIER --- */}
+        <Route path="/atelier-savoir-faire" element={<PageTransition><AtelierSavoirFaire content={atelierServices} /></PageTransition>} />
         
         {/* ESHOP */}
         <Route path="/eshop" element={<PageTransition><Eshop products={products} collections={shopCollections} /></PageTransition>} />
@@ -79,8 +82,8 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
 function CobaltApp() {
   const location = useLocation();
   
-  // --- CORRECTION 1 : ON RÉCUPÈRE 'navigation' DEPUIS LE HOOK ---
-  const { projects, products, articles, team, home, services, navigation, loading } = useCobaltData();
+  // --- CORRECTION : AJOUT DE 'atelierServices' DEPUIS LE HOOK ---
+  const { projects, products, articles, team, home, services, atelierServices, navigation, loading } = useCobaltData();
   const [showContactModal, setShowContactModal] = useState(false);
 
   // --- ECRAN DE CHARGEMENT ---
@@ -158,7 +161,6 @@ function CobaltApp() {
       <div className={`fixed top-0 left-0 w-full h-20 backdrop-blur-sm z-40 border-b transition-all duration-700 ${theme.navBg}`} />
       
       <div className={`fixed top-0 left-0 w-full z-50 transition-colors duration-700 ${theme.navText}`}>
-          {/* --- CORRECTION 2 : ON TRANSMET 'navigation' AU HEADER --- */}
           <Header navigation={navigation} onOpenContact={() => setShowContactModal(true)} />
       </div>
       
@@ -174,6 +176,7 @@ function CobaltApp() {
           shopCollections={shopCollections}
           team={team}
           services={services}
+          atelierServices={atelierServices} // <--- TRANSMISSION ICI
           onOpenContact={() => setShowContactModal(true)}
         />
       </main>

@@ -1,93 +1,99 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Hammer } from 'lucide-react'; 
-import { ScrollAnimation } from '../components/ui/CobaltComponents';
+import { ArrowRight, Hammer, Euro, PenTool, CheckCircle2 } from 'lucide-react';
 
-export default function AtelierSavoirFaire({ services }) {
+export default function AtelierSavoirFaire({ content }) {
   
-  // FILTRE : On ne garde que les services "Atelier"
-  const safeServices = services ? services.filter(s => s.department === 'Atelier') : [];
+  // Sécurités (Fallback)
+  const pageTitle = content?.pageTitle || "SAVOIR-FAIRE";
+  const subtitle = content?.subtitle || "Design & Fabrication";
+  const list = content?.listePrestations || [];
 
   return (
-    <div className="animate-fade-in min-h-screen pt-24 md:pt-32 pb-24 px-4 md:px-6 bg-[#0A0A0C] text-white selection:bg-[#2433FF] selection:text-white">
+    <div className="min-h-screen bg-[#0A0A0C] pt-32 pb-20 px-4 md:px-8">
       
-      {/* HEADER ATELIER */}
-      <div className="max-w-7xl mx-auto mb-16 md:mb-24 border-b border-white/10 pb-8">
-         <span className="text-[#2433FF] font-bold text-xs uppercase tracking-widest mb-4 block">Département Fabrication</span>
-         <h1 className="cobalt-heading text-6xl md:text-9xl leading-[0.9] tracking-tighter">
-           SAVOIR-FAIRE
-         </h1>
+      {/* EN-TÊTE */}
+      <div className="max-w-5xl mx-auto mb-20 text-center md:text-left">
+        <span className="text-white/60 font-mono text-sm tracking-widest uppercase mb-4 block">
+          {subtitle}
+        </span>
+        <h1 className="cobalt-heading text-5xl md:text-7xl text-white mb-8">
+          {pageTitle}
+        </h1>
+        {/* Ligne blanche pour l'Atelier (au lieu de bleue pour différencier) */}
+        <div className="w-24 h-1 bg-white mx-auto md:mx-0"></div>
       </div>
 
-      {/* LISTE DES SERVICES ATELIER */}
-      <div className="max-w-7xl mx-auto">
-         <div className="grid gap-8">
-            
-            {safeServices.length > 0 ? (
-               safeServices.map((service, i) => (
-                  <ScrollAnimation key={service.id} delay={i * 100} animation="slide-up">
-                     <Link to={`/prestation/${service.id}`} className="group relative block bg-[#0F0F11] border border-white/10 hover:border-[#2433FF] transition-all duration-500 overflow-hidden">
-                        
-                        <div className="grid md:grid-cols-2 h-full min-h-[400px]">
-                           
-                           {/* INFO */}
-                           <div className="p-8 md:p-12 flex flex-col justify-between relative z-10">
-                              <div>
-                                 <div className="w-12 h-12 rounded-full bg-[#2433FF]/10 flex items-center justify-center text-[#2433FF] mb-8 group-hover:bg-[#2433FF] group-hover:text-white transition-all duration-500">
-                                    <Hammer className="w-6 h-6" /> 
-                                 </div>
-                                 
-                                 <h2 className="cobalt-heading text-4xl md:text-5xl mb-4 group-hover:text-[#2433FF] transition-colors">
-                                    {service.title}
-                                 </h2>
-                                 
-                                 {service.subtitle && (
-                                    <p className="font-mono text-sm text-gray-500 uppercase tracking-widest mb-6">
-                                       {service.subtitle}
-                                    </p>
-                                 )}
+      {/* GRILLE */}
+      <div className="max-w-5xl mx-auto grid grid-cols-1 gap-6">
+        
+        {list.length > 0 ? (
+          list.map((item, index) => (
+            <div 
+              key={index} 
+              className="group bg-[#111113] border border-white/10 rounded-xl p-6 md:p-8 hover:border-white transition-all duration-300 relative overflow-hidden"
+            >
+              {/* Effet de lueur Blanche pour l'Atelier */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-white/10 transition-all"></div>
 
-                                 <p className="text-gray-400 leading-relaxed max-w-md group-hover:text-gray-300 transition-colors">
-                                    {service.shortDescription}
-                                 </p>
-                              </div>
+              <div className="relative z-10 flex flex-col md:flex-row gap-8">
+                
+                {/* BLOC GAUCHE */}
+                <div className="md:w-1/3 flex flex-col">
+                   <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center text-white">
+                        <Hammer size={16} />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white tracking-tight">{item.title}</h3>
+                   </div>
+                   
+                   {item.quote && (
+                     <blockquote className="text-gray-500 italic text-sm mb-6 border-l-2 border-white/30 pl-4">
+                       "{item.quote}"
+                     </blockquote>
+                   )}
 
-                              <div className="mt-12 flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
-                                 <span className="w-8 h-[1px] bg-white/20 group-hover:bg-[#2433FF] transition-colors"></span>
-                                 <span className="group-hover:translate-x-2 transition-transform duration-300 flex items-center gap-2">
-                                    Découvrir <ArrowRight className="w-4 h-4 text-[#2433FF]" />
-                                 </span>
-                              </div>
-                           </div>
-
-                           {/* IMAGE */}
-                           <div className="relative h-64 md:h-full overflow-hidden border-t md:border-t-0 md:border-l border-white/10">
-                              <div className="absolute inset-0 bg-[#2433FF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 mix-blend-overlay"></div>
-                              
-                              {service.image ? (
-                                 <img 
-                                    src={service.image} 
-                                    alt={service.title} 
-                                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
-                                 />
-                              ) : (
-                                 <div className="w-full h-full bg-gray-900 flex items-center justify-center text-gray-600 font-mono text-xs">Image manquante</div>
-                              )}
-                           </div>
-
+                   <div className="mt-auto flex flex-wrap gap-2">
+                      {item.duration && (
+                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded text-xs text-gray-300 font-mono">
+                           <PenTool size={12} /> {item.duration}
                         </div>
-                     </Link>
-                  </ScrollAnimation>
-               ))
-            ) : (
-               <div className="py-24 text-center border border-dashed border-white/10 text-gray-500">
-                  Aucun savoir-faire pour le moment.
-               </div>
-            )}
+                      )}
+                      {item.price && (
+                        <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded text-xs text-white font-mono font-bold">
+                           <Euro size={12} /> {item.price}
+                        </div>
+                      )}
+                   </div>
+                </div>
 
-         </div>
+                {/* BLOC DROIT */}
+                <div className="md:w-2/3 md:border-l md:border-white/5 md:pl-8 flex flex-col justify-center">
+                   <p className="text-gray-300 leading-relaxed mb-6">
+                      {item.description}
+                   </p>
+
+                   {item.format && (
+                     <div className="bg-[#0A0A0C] border border-white/5 rounded p-4 mb-6">
+                        <span className="text-xs text-gray-500 uppercase tracking-widest block mb-2">Technique / Matériaux</span>
+                        <p className="text-sm text-white font-mono">{item.format}</p>
+                     </div>
+                   )}
+
+                   <div className="flex items-center gap-2 text-white text-xs font-bold uppercase tracking-widest cursor-pointer group-hover:translate-x-2 transition-transform mt-auto">
+                      Discuter du projet <ArrowRight size={14} />
+                   </div>
+                </div>
+
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-20 text-gray-500 font-mono">
+            Les prestations de l'atelier sont en cours de création sur Strapi.
+          </div>
+        )}
+
       </div>
-
     </div>
   );
 }
