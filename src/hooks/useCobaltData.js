@@ -40,7 +40,7 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
-          fetch(`${STRAPI_URL}/api/homepage?populate=*`), // <--- LIGNE AJOUTÉE
+          fetch(`${STRAPI_URL}/api/homepage?populate[hero][populate]=*&populate[blocks][populate]=*.icon&populate[blocks][populate]=cards.icon&populate[blocks][populate]=leftImage`),
         ]);
 
         const newData = { ...data, isLoaded: true };
