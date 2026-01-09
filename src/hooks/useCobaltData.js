@@ -35,27 +35,30 @@ export const useCobaltData = () => {
       try {
         console.log("📡 Démarrage de la synchronisation Strapi...");
 
-        // --- CONSTRUCTION DE L'URL HOMEPAGE (Version Sécurisée) ---
-        // On évite les virgules qui causent l'erreur 500. On déclare chaque besoin séparément.
+        // --- CONSTRUCTION DE L'URL HOMEPAGE (Version Chirurgicale) ---
+        // On utilise la syntaxe 'on' pour cibler précisément chaque type de bloc sans conflit.
+        
         const homeParams = new URLSearchParams();
         
-        // 1. On veut tout le Hero
+        // 1. Le Hero (Simple)
         homeParams.append('populate[hero][populate]', '*');
-        
-        // 2. On veut tout le contenu textuel des Blocs
-        homeParams.append('populate[blocks][populate]', '*'); 
-        
-        // 3. Spécifique : On veut l'image 'leftImage' (Featured Section)
-        homeParams.append('populate[blocks][populate]', 'leftImage');
 
-        // 4. Spécifique : On descend dans les cartes pour chercher l'icône (Approche Section)
-        homeParams.append('populate[blocks][populate][cards][populate]', 'icon');
+        // 2. Bloc "Approche" (Ciblage précis)
+        // On récupère tout le texte ET on descend dans les cartes pour l'icône
+        homeParams.append('populate[blocks][on][sections.approche-section][populate][cards][populate]', 'icon');
+        
+        // 3. Bloc "Featured / À la une" (Ciblage précis)
+        // On récupère l'image de gauche explicitement
+        homeParams.append('populate[blocks][on][sections.featured-section][populate]', 'leftImage');
+
+        const queryHome = homeParams.toString();
+        // console.log("Debug URL:", queryHome); // Décommente pour voir l'URL générée
 
         const [resProjects, resArticles, resProducts, resHome] = await Promise.all([
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
-          fetch(`${STRAPI_URL}/api/homepage?${homeParams.toString()}`), 
+          fetch(`${STRAPI_URL}/api/homepage?${queryHome}`), 
         ]);
 
         const newData = { ...data, isLoaded: true };
