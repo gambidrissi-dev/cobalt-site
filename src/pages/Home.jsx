@@ -20,10 +20,10 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
   // On cherche le bloc "Approche" (Cobalt+ / Atelier)
   // Note: Le nom "__component" dépend de comment tu as nommé le composant dans Strapi.
   // Souvent c'est 'category.component-name'. Regarde ta console si ça ne marche pas du premier coup.
-  const approcheData = blocks.find(b => b.__component === 'sections.approche-section');
+  const approcheData = blocks.find(b => b.__component.includes('approche'));
   
   // On cherche le bloc "Featured" (À la une)
-  const featuredData = blocks.find(b => b.__component === 'sections.featured-section');
+  const featuredData = blocks.find(b => b.__component.includes('featured'));
 
   // --- 2. EXTRACTION DES CARTES (POLES) ---
   // On suppose que la première carte est Cobalt+ et la deuxième l'Atelier
