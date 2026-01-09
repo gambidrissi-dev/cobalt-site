@@ -6,7 +6,14 @@ import { ScrollAnimation } from '../components/ui/CobaltComponents';
 // MODIFICATION 1 : On récupère 'homeContent' envoyé par App.js
 export default function Home({ projects, articles, homeContent, onOpenContact }) {
   
+  // --- ZONE DE DEBUG ---
+  console.log("=== DEBUG HOME ===");
+  console.log("Est-ce que homeContent existe ?", homeContent);
+  console.log("Contenu de Hero :", homeContent?.hero);
+  // ---------------------
+
   const choiceRef = useRef(null);
+  // ... la suite de ton code ...
 
   // Sécurisation : On récupère le composant Hero s'il existe
   const hero = homeContent?.hero;
