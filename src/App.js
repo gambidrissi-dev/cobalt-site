@@ -31,7 +31,8 @@ import Asso from './pages/Asso';
 import AssoDetail from './pages/AssoDetail';
 import Home from './pages/Home';
 
-function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, onOpenContact }) {
+// --- AJOUT DE 'services' DANS LES PROPS ---
+function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, services, onOpenContact }) {
   const location = useLocation();
 
   return (
@@ -48,7 +49,9 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
         <Route path="/cobalt-plus" element={<PageTransition><CobaltPlus /></PageTransition>} />
         <Route path="/projets" element={<PageTransition><Projects projects={projects} expertises={activeExpertises} /></PageTransition>} />
         <Route path="/projet/:id" element={<PageTransition><ProjectDetail projects={projects} /></PageTransition>} />
-        <Route path="/prestations" element={<PageTransition><Services /></PageTransition>} />
+        
+        {/* --- CORRECTION ICI : ON PASSE LES DONNÉES AUX PRESTATIONS --- */}
+        <Route path="/prestations" element={<PageTransition><Services servicesContent={services} /></PageTransition>} />
         <Route path="/prestation/:id" element={<PageTransition><ServiceDetail /></PageTransition>} />
 
         {/* ATELIER */}
@@ -77,8 +80,22 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
 
 function CobaltApp() {
   const location = useLocation();
-  const { projects, products, articles, team, home } = useCobaltData();
+  
+  // --- AJOUT DE 'services' et 'loading' DEPUIS LE HOOK ---
+  const { projects, products, articles, team, home, services, loading } = useCobaltData();
   const [showContactModal, setShowContactModal] = useState(false);
+
+  // --- ECRAN DE CHARGEMENT (INDISPENSABLE AVEC STRAPI) ---
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-[#0A0A0C] flex items-center justify-center text-white">
+        <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#2433FF]"></div>
+            <div className="animate-pulse font-bold tracking-widest text-xs">CHARGEMENT COBALT...</div>
+        </div>
+      </div>
+    );
+  }
 
   // --- LOGIQUE DE THÈME ---
   const getPageTheme = () => {
@@ -140,10 +157,8 @@ function CobaltApp() {
       {theme.showDots && <DotGridBackground />}
       
       {/* NAVBAR */}
-      {/* 1. Fond Noir Constant (via navBg) */}
       <div className={`fixed top-0 left-0 w-full h-20 backdrop-blur-sm z-40 border-b transition-all duration-700 ${theme.navBg}`} />
       
-      {/* 2. Texte Blanc Constant (via navText) */}
       <div className={`fixed top-0 left-0 w-full z-50 transition-colors duration-700 ${theme.navText}`}>
           <Header onOpenContact={() => setShowContactModal(true)} />
       </div>
@@ -159,6 +174,7 @@ function CobaltApp() {
           articles={articles}
           shopCollections={shopCollections}
           team={team}
+          services={services} // <--- AJOUTE ICI : On passe la data des services
           onOpenContact={() => setShowContactModal(true)}
         />
       </main>

@@ -21,9 +21,11 @@ export default function Header({ onOpenContact }) {
     }
   }, [isMobileMenuOpen]);
 
+  // --- MODIFICATION ICI : AJOUT DU LIEN PRESTATIONS ---
   const navLinks = [
     { name: 'Cobalt +', path: '/cobalt-plus' },
     { name: "L'Atelier", path: '/atelier' },
+    { name: 'Prestations', path: '/prestations' }, // <--- NOUVEAU LIEN
     { name: 'Média', path: '/media' },
     { name: 'Association', path: '/asso' },
     { name: 'Agence', path: '/about' },
