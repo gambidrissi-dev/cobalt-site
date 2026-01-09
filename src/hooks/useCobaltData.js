@@ -8,6 +8,7 @@ import {
 
 const STRAPI_URL = "https://strapi.collectifcobalt.eu"; 
 
+// Petit helper pour nettoyer les URLs d'images
 const makeUrl = (data) => {
   if (!data) return null;
   const attrs = data.attributes || data;
@@ -24,7 +25,7 @@ export const useCobaltData = () => {
     products: staticProducts, 
     team: staticTeam,
     services: [], 
-    home: null,
+    home: null, // C'est ici qu'on veut mettre les données
     isLoaded: false
   });
 
@@ -33,11 +34,13 @@ export const useCobaltData = () => {
       try {
         console.log("📡 Chargement complet depuis Strapi...");
 
-        // On lance les 3 appels en parallèle
-        const [resProjects, resArticles, resProducts] = await Promise.all([
+        // --- MODIFICATION 1 : AJOUT DE L'APPEL HOMEPAGE ---
+        // On demande ?populate=* pour avoir les images et les composants du Hero
+        const [resProjects, resArticles, resProducts, resHome] = await Promise.all([
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
+          fetch(`${STRAPI_URL}/api/homepage?populate=*`), // <--- LIGNE AJOUTÉE
         ]);
 
         const newData = { ...data, isLoaded: true };
@@ -74,7 +77,7 @@ export const useCobaltData = () => {
           }
         }
 
-        // --- 2. ARTICLES (PRESSE) ---
+        // --- 2. ARTICLES ---
         if (resArticles.ok) {
             const d = await resArticles.json();
             if (d.data) {
@@ -83,7 +86,7 @@ export const useCobaltData = () => {
                     return {
                         id: item.documentId || item.id,
                         title: attrs.title,
-                        subtitle: attrs.source, // On map 'source' vers 'subtitle' pour le design
+                        subtitle: attrs.source,
                         date: attrs.date,
                         link: attrs.link,
                         image: makeUrl(attrs.cover?.data || attrs.cover)
@@ -92,7 +95,7 @@ export const useCobaltData = () => {
             }
         }
 
-        // --- 3. PRODUITS (BOUTIQUE) ---
+        // --- 3. PRODUITS ---
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) {
@@ -108,6 +111,21 @@ export const useCobaltData = () => {
                     };
                 });
             }
+        }
+
+        // --- 4. HOMEPAGE (NOUVEAU BLOC) ---
+        if (resHome.ok) {
+            const h = await resHome.json();
+            // Strapi retourne souvent { data: { attributes: ... } } pour les single types
+            // Ou parfois directement { data: ... } selon la version et les plugins
+            const homeAttributes = h.data?.attributes || h.data;
+            
+            if (homeAttributes) {
+                console.log("🏠 Homepage reçue :", homeAttributes);
+                newData.home = homeAttributes;
+            }
+        } else {
+            console.warn("⚠️ Impossible de charger la Homepage");
         }
 
         setData(newData);
