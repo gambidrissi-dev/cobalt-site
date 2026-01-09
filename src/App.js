@@ -31,7 +31,6 @@ import Asso from './pages/Asso';
 import AssoDetail from './pages/AssoDetail';
 import Home from './pages/Home';
 
-// --- AJOUT DE 'services' DANS LES PROPS ---
 function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, services, onOpenContact }) {
   const location = useLocation();
 
@@ -50,7 +49,6 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
         <Route path="/projets" element={<PageTransition><Projects projects={projects} expertises={activeExpertises} /></PageTransition>} />
         <Route path="/projet/:id" element={<PageTransition><ProjectDetail projects={projects} /></PageTransition>} />
         
-        {/* --- CORRECTION ICI : ON PASSE LES DONNÉES AUX PRESTATIONS --- */}
         <Route path="/prestations" element={<PageTransition><Services servicesContent={services} /></PageTransition>} />
         <Route path="/prestation/:id" element={<PageTransition><ServiceDetail /></PageTransition>} />
 
@@ -81,11 +79,11 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
 function CobaltApp() {
   const location = useLocation();
   
-  // --- AJOUT DE 'services' et 'loading' DEPUIS LE HOOK ---
-  const { projects, products, articles, team, home, services, loading } = useCobaltData();
+  // --- CORRECTION 1 : ON RÉCUPÈRE 'navigation' DEPUIS LE HOOK ---
+  const { projects, products, articles, team, home, services, navigation, loading } = useCobaltData();
   const [showContactModal, setShowContactModal] = useState(false);
 
-  // --- ECRAN DE CHARGEMENT (INDISPENSABLE AVEC STRAPI) ---
+  // --- ECRAN DE CHARGEMENT ---
   if (loading) {
     return (
       <div className="h-screen w-full bg-[#0A0A0C] flex items-center justify-center text-white">
@@ -160,7 +158,8 @@ function CobaltApp() {
       <div className={`fixed top-0 left-0 w-full h-20 backdrop-blur-sm z-40 border-b transition-all duration-700 ${theme.navBg}`} />
       
       <div className={`fixed top-0 left-0 w-full z-50 transition-colors duration-700 ${theme.navText}`}>
-          <Header onOpenContact={() => setShowContactModal(true)} />
+          {/* --- CORRECTION 2 : ON TRANSMET 'navigation' AU HEADER --- */}
+          <Header navigation={navigation} onOpenContact={() => setShowContactModal(true)} />
       </div>
       
       {showContactModal && <ContactModal onClose={() => setShowContactModal(false)} />}
@@ -174,7 +173,7 @@ function CobaltApp() {
           articles={articles}
           shopCollections={shopCollections}
           team={team}
-          services={services} // <--- AJOUTE ICI : On passe la data des services
+          services={services}
           onOpenContact={() => setShowContactModal(true)}
         />
       </main>
