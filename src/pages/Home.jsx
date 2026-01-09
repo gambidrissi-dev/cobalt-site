@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowDown, Layers, Hammer } from 'lucide-react';
 import { ScrollAnimation } from '../components/ui/CobaltComponents';
 
-// MODIFICATION 1 : On ajoute homeContent dans les props reçues
+// MODIFICATION 1 : On récupère 'homeContent' envoyé par App.js
 export default function Home({ projects, articles, homeContent, onOpenContact }) {
   
   const choiceRef = useRef(null);
+
+  // Sécurisation : On récupère le composant Hero s'il existe
+  const hero = homeContent?.hero;
 
   const scrollToChoice = () => {
     choiceRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -15,12 +18,12 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
   const latestProject = projects ? Object.values(projects)[0] : null;
   const latestArticle = articles ? articles[0] : null;
 
-  // --- MODIFICATION 2 : DÉFINITION DES TEXTES (Strapi VS Défaut) ---
-  
-  // Pour le titre, on garde ton super design (Gradient) par défaut.
-  // Mais si tu mets un titre dans Strapi, il remplacera tout le bloc.
-  const heroTitle = homeContent?.heroTitle ? (
-    homeContent.heroTitle
+  // --- LOGIQUE D'AFFICHAGE DES TEXTES ---
+
+  // 1. Le Titre Principal
+  // Si Strapi a un titre, on l'affiche. Sinon, on garde ton design "Construire l'Invisible" avec le dégradé.
+  const mainTitle = hero?.titrePrincipal ? (
+    hero.titrePrincipal
   ) : (
     <>
       CONSTRUIRE<br/>
@@ -30,37 +33,36 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
     </>
   );
 
-  const subtitle = homeContent?.heroSubtitle || "\"Manifeste du réel\"";
-  
-  const agencyText = homeContent?.agencyText || "Bureau d'étude, conception architecturale et maîtrise d'œuvre pour vos projets d'habitat et commerciaux.";
-  
-  const atelierText = homeContent?.atelierText || "Laboratoire de fabrication, prototypage sur-mesure et édition d'objets disponibles sur notre E-Shop.";
+  // 2. Le Sous-titre (Manuscrit)
+  const subTitle = hero?.surTitre || "\"Manifeste du réel\"";
 
+  // 3. Le texte du bouton
+  const buttonText = hero?.texteBouton || "Choisir son univers";
 
   return (
     <div className="animate-fade-in bg-[#0A0A0C] min-h-screen text-white selection:bg-[#2433FF] selection:text-white overflow-x-hidden">
       
       {/* =========================================
-          1. HERO SECTION
+          1. HERO SECTION (Connecté à Strapi)
           ========================================= */}
       <div className="h-screen flex flex-col justify-center items-center text-center px-4 md:px-6 relative border-b border-white/10">
          
          {/* SOUS-TITRE DYNAMIQUE */}
          <span className="cobalt-handwritten text-[#2433FF] text-xl md:text-3xl mb-4 rotate-[-4deg] block">
-            {subtitle}
+            {subTitle}
          </span>
 
          {/* TITRE PRINCIPAL DYNAMIQUE */}
          <h1 className="cobalt-heading text-5xl md:text-9xl leading-[0.9] tracking-tighter mb-8 md:mb-12">
-           {heroTitle}
+           {mainTitle}
          </h1>
 
-         {/* BOUTON D'ACTION */}
+         {/* BOUTON D'ACTION DYNAMIQUE */}
          <button 
             onClick={scrollToChoice}
             className="group bg-[#2433FF] text-white px-6 py-3 md:px-8 md:py-4 font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 flex items-center gap-3 text-xs md:text-sm"
          >
-            Choisir son univers <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+            {buttonText} <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
          </button>
 
          {/* Petit indicateur de scroll en bas */}
@@ -104,9 +106,8 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
                   <div className="relative z-10 mt-auto">
                      <h3 className="cobalt-heading text-4xl md:text-6xl mb-4 md:mb-6 group-hover:text-[#2433FF] transition-colors">COBALT +</h3>
                      
-                     {/* TEXTE DYNAMIQUE AGENCE */}
                      <p className="text-gray-400 max-w-sm text-sm md:text-lg mb-6 md:mb-8 leading-relaxed">
-                        {agencyText}
+                        Bureau d'étude, conception architecturale et maîtrise d'œuvre pour vos projets d'habitat et commerciaux.
                      </p>
                      
                      <span className="inline-flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-white border-b border-white/30 pb-2 group-hover:border-[#2433FF] group-hover:text-[#2433FF] transition-all">
@@ -128,9 +129,8 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
                   <div className="relative z-10 mt-auto">
                      <h3 className="cobalt-heading text-4xl md:text-6xl mb-4 md:mb-6 group-hover:text-white transition-colors">L'ATELIER</h3>
                      
-                     {/* TEXTE DYNAMIQUE ATELIER */}
                      <p className="text-gray-400 max-w-sm text-sm md:text-lg mb-6 md:mb-8 leading-relaxed">
-                        {atelierText}
+                        Laboratoire de fabrication, prototypage sur-mesure et édition d'objets disponibles sur notre E-Shop.
                      </p>
                      
                      <span className="inline-flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-white border-b border-white/30 pb-2 group-hover:border-white transition-all">
@@ -145,7 +145,7 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
 
 
       {/* =========================================
-          3. ACTUALITÉS
+          3. ACTUALITÉS (Déjà dynamique via 'projects' et 'articles')
           ========================================= */}
       <div className="py-16 md:py-24 max-w-7xl mx-auto px-4 md:px-6">
          <div className="flex justify-between items-end mb-8 md:mb-12">
@@ -156,13 +156,13 @@ export default function Home({ projects, articles, homeContent, onOpenContact })
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* ... Reste inchangé car déjà connecté via 'projects' et 'articles' ... */}
             
             {latestProject && (
                <ScrollAnimation animation="slide-up">
                   <Link to={`/projet/${latestProject.id}`} className="group block bg-[#0F0F11] border border-white/10 p-4 md:p-6 hover:border-[#2433FF] transition-all">
                      <div className="aspect-[16/9] overflow-hidden mb-4 md:mb-6 bg-gray-900 relative">
-                        <img src={latestProject.images.hero} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                        {/* Note: Assure-toi que latestProject.images.hero est bien une URL complète ou utilise getStrapiMedia */}
+                        <img src={latestProject.images?.hero} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
                         <div className="absolute top-4 left-4 bg-[#2433FF] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest">
                            Nouveau Projet
                         </div>
