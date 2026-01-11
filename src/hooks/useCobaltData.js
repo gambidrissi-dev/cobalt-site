@@ -24,7 +24,7 @@ export const useCobaltData = () => {
     products: staticProducts, 
     shopCollections: [], 
     team: staticTeam,
-    assoPrograms: [], // <--- NOUVEAU : On stocke les programmes ici
+    assoPrograms: [],
     
     navigation: [],
     home: null,
@@ -49,12 +49,12 @@ export const useCobaltData = () => {
         const productParams = new URLSearchParams();
         productParams.append('populate', '*'); 
         
-        const standardParams = new URLSearchParams();
-        standardParams.append('populate', '*');
+        const collectionParams = new URLSearchParams();
+        collectionParams.append('populate', '*'); // Important pour avoir la liste des produits dedans
 
         const [
             resProjects, resArticles, resProducts, resTeam, resCollections,
-            resAssoPrograms, // <--- NOUVEAU FETCH
+            resAssoPrograms,
             resNav, resHome,
             resServices, resAtelierServices,
             resCobaltPlus, resAtelier,
@@ -65,9 +65,8 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?${productParams}`), 
           fetch(`${STRAPI_URL}/api/team-members?populate=*&sort=rang:asc`), 
-          fetch(`${STRAPI_URL}/api/shop-collections?populate=*`),
-          
-          fetch(`${STRAPI_URL}/api/asso-programs?populate=*&sort=rank:asc`), // <--- LIGNE AJOUTÉE
+          fetch(`${STRAPI_URL}/api/shop-collections?${collectionParams}`), 
+          fetch(`${STRAPI_URL}/api/asso-programs?populate=*&sort=rank:asc`), 
 
           fetch(`${STRAPI_URL}/api/navigation?populate=*`),
           fetch(`${STRAPI_URL}/api/homepage?populate[hero][populate]=*&populate[blocks][populate]=*`),
@@ -90,55 +89,90 @@ export const useCobaltData = () => {
             return json.data?.attributes || json.data || null;
         };
 
-        // --- TRAITEMENT DES PROGRAMMES ASSO ---
-        if (resAssoPrograms.ok) {
-            const d = await resAssoPrograms.json();
-            if (d.data) {
-                newData.assoPrograms = d.data.map(item => {
-                    const attrs = item.attributes || item;
-                    return {
-                        id: item.id || item.documentId,
-                        ...attrs,
-                        image: makeUrl(attrs.image?.data || attrs.image),
-                        slug: attrs.slug // On garde le slug pour l'URL
-                    };
-                });
-            }
-        }
+        // --- 1. PRÉPARATION DES LISTES VIDES ---
+        let processedProducts = [];
+        let processedCollections = [];
 
-        // (Le reste du traitement reste identique...)
+        // --- 2. TRAITEMENT DES PRODUITS (Base) ---
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) {
-                newData.products = d.data.map(item => {
+                processedProducts = d.data.map(item => {
                     const attrs = item.attributes || item;
+                    
                     const rawImages = attrs.gallery?.data || attrs.gallery || [];
                     const gallery = Array.isArray(rawImages) ? rawImages.map(img => makeUrl(img)) : [];
                     const coverUrl = makeUrl(attrs.cover?.data) || gallery[0] || null;
-                    const colData = attrs.shop_collection?.data;
-                    const collectionId = colData?.id || colData?.documentId || null;
+
+                    // Essai de lien via le produit (souvent vide)
+                    const rawCol = attrs.shop_collection || attrs.shopCollection;
+                    const colData = rawCol?.data || rawCol;
+                    let collectionId = colData?.id || colData?.documentId || null;
 
                     return {
-                        id: item.id || item.documentId,
+                        id: item.id || item.documentId, // On garde les deux ID pour être sûr
+                        strapiId: item.id,
                         ...attrs,
                         image: coverUrl,
                         gallery: gallery,
                         stock: attrs.stock !== undefined ? attrs.stock : 0,
-                        category: attrs.category || "Divers",
-                        collectionId: collectionId,
+                        category: attrs.category || attrs.Category || "Divers",
+                        collectionId: collectionId, 
                         limitedLabel: attrs.limitedLabel
                     };
                 });
             }
         }
+
+        // --- 3. TRAITEMENT DES COLLECTIONS ---
         if (resCollections.ok) {
             const d = await resCollections.json();
             if (d.data) {
-                newData.shopCollections = d.data.map(item => ({
-                    id: item.id || item.documentId,
-                    ...item.attributes || item,
-                    image: makeUrl(item.attributes?.cover?.data || item.cover)
-                }));
+                processedCollections = d.data.map(item => {
+                    // Récupération des produits DANS la collection
+                    const productsInCol = item.attributes?.products?.data || item.products || [];
+                    
+                    return {
+                        id: item.id || item.documentId,
+                        strapiId: item.id,
+                        ...item.attributes || item,
+                        image: makeUrl(item.attributes?.cover?.data || item.cover),
+                        // On garde la liste brute pour faire le lien inverse
+                        rawProductsList: productsInCol 
+                    };
+                });
+            }
+        }
+
+        // --- 4. LE CORRECTIF MAGIQUE (Lien Inverse) ---
+        // Si le produit n'a pas trouvé sa collection, la collection va réclamer son produit.
+        processedCollections.forEach(col => {
+            if (col.rawProductsList && col.rawProductsList.length > 0) {
+                col.rawProductsList.forEach(pInCol => {
+                    // On cherche ce produit dans notre liste principale
+                    const productToUpdate = processedProducts.find(p => p.strapiId === pInCol.id || p.id === pInCol.id);
+                    
+                    if (productToUpdate) {
+                        console.log(`🔗 Lien forcé : Produit ${productToUpdate.name} -> Collection ${col.title}`);
+                        productToUpdate.collectionId = col.id; // On force l'ID de la collection
+                    }
+                });
+            }
+        });
+
+        // On assigne les listes corrigées
+        newData.products = processedProducts;
+        newData.shopCollections = processedCollections;
+
+
+        // (Le reste ne change pas)
+        if (resAssoPrograms.ok) {
+            const d = await resAssoPrograms.json();
+            if (d.data) {
+                newData.assoPrograms = d.data.map(item => {
+                    const attrs = item.attributes || item;
+                    return { id: item.id || item.documentId, ...attrs, image: makeUrl(attrs.image?.data || attrs.image), slug: attrs.slug };
+                });
             }
         }
         if (resTeam.ok) { 
