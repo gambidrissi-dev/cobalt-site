@@ -27,15 +27,16 @@ import MemberDetail from './pages/MemberDetail';
 import Media from './pages/Media';
 import ArticleDetail from './pages/ArticleDetail';
 import Asso from './pages/Asso';
-import AssoDetail from './pages/AssoDetail';
+import AssoDetail from './pages/AssoDetail'; // (Optionnel si tu as créé cette page)
 import Home from './pages/Home';
 
-// 1. ON AJOUTE LES NOUVELLES PROPS DANS LA DÉFINITION
+// 1. DÉFINITION DES ROUTES
 function AnimatedRoutes({ 
   projects, activeExpertises, products, articles, shopCollections, team, home, 
   services, atelierServices, 
   pageCobaltPlus, pageAtelier, 
-  pageMedia, pageAsso, pageAgence, pageProjects, pageEshop, // <--- AJOUTS ICI
+  pageMedia, pageAsso, pageAgence, pageProjects, pageEshop,
+  assoPrograms, // <--- NOUVEAU : Les cartes programmes
   navigation, onOpenContact 
 }) {
   const location = useLocation();
@@ -61,7 +62,7 @@ function AnimatedRoutes({
           </PageTransition>
         } />
 
-        {/* ON PASSE LE CONTENU AUX PROJETS */}
+        {/* PROJETS */}
         <Route path="/projets" element={<PageTransition><Projects projects={projects} expertises={activeExpertises} pageContent={pageProjects} /></PageTransition>} />
         <Route path="/projet/:id" element={<PageTransition><ProjectDetail projects={projects} /></PageTransition>} />
         
@@ -81,20 +82,29 @@ function AnimatedRoutes({
 
         <Route path="/atelier-savoir-faire" element={<PageTransition><AtelierSavoirFaire content={atelierServices} /></PageTransition>} />
         
-        {/* ON PASSE LE CONTENU AU ESHOP */}
+        {/* ESHOP */}
         <Route path="/eshop" element={<PageTransition><Eshop products={products} collections={shopCollections} pageContent={pageEshop} /></PageTransition>} />
         <Route path="/collection/:id" element={<PageTransition><CollectionDetail collections={shopCollections} products={products} /></PageTransition>} />
         <Route path="/produit/:id" element={<PageTransition><ProductDetail products={products} /></PageTransition>} />
         
-        {/* ON PASSE LE CONTENU AU MÉDIA */}
+        {/* MÉDIA */}
         <Route path="/media" element={<PageTransition><Media articles={articles} pageContent={pageMedia} /></PageTransition>} />
         <Route path="/article/:id" element={<PageTransition><ArticleDetail articles={articles} /></PageTransition>} />
         
-        {/* ON PASSE LE CONTENU À L'ASSO (C'est ça qui corrige ton bug 2026) */}
-        <Route path="/asso" element={<PageTransition><Asso onOpenContact={onOpenContact} pageContent={pageAsso} /></PageTransition>} />
-        <Route path="/asso/:id" element={<PageTransition><AssoDetail onOpenContact={onOpenContact} /></PageTransition>} />
+        {/* ASSO (C'est ici qu'on passe les programmes) */}
+        <Route path="/asso" element={
+            <PageTransition>
+                <Asso 
+                    onOpenContact={onOpenContact} 
+                    pageContent={pageAsso} 
+                    programs={assoPrograms} // <--- CONNEXION ICI
+                />
+            </PageTransition>
+        } />
+        {/* Si tu as prévu une page détail pour les programmes (optionnel pour l'instant) */}
+        {/* <Route path="/asso/:id" element={<PageTransition><AssoDetail /></PageTransition>} /> */}
         
-        {/* ON PASSE LE CONTENU À L'AGENCE */}
+        {/* AGENCE */}
         <Route path="/about" element={<PageTransition><About team={team} pageContent={pageAgence} /></PageTransition>} />
         <Route path="/equipe/:id" element={<PageTransition><MemberDetail team={team} /></PageTransition>} />
 
@@ -106,12 +116,13 @@ function AnimatedRoutes({
 function CobaltApp() {
   const location = useLocation();
   
-  // 2. ON RÉCUPÈRE TOUTES LES DONNÉES DU HOOK
+  // 2. RÉCUPÉRATION DES DONNÉES DU HOOK
   const { 
       projects, products, articles, team, 
       home, navigation, services, atelierServices,
       pageCobaltPlus, pageAtelier, 
-      pageMedia, pageAsso, pageAgence, pageProjects, pageEshop, // <--- AJOUTS ICI
+      pageMedia, pageAsso, pageAgence, pageProjects, pageEshop,
+      assoPrograms, // <--- NOUVEAU : On récupère la liste des programmes
       loading 
   } = useCobaltData();
 
@@ -128,14 +139,19 @@ function CobaltApp() {
     );
   }
 
+  // Gestion des thèmes (Couleurs dynamiques selon la page)
   const getPageTheme = () => {
     const path = location.pathname;
+    // Page Asso en bleu cobalt
     if (path.startsWith('/asso')) return { bg: 'bg-[#2433FF]', text: 'text-white', navBg: 'bg-[#0A0A0C]/90 border-white/20', navText: 'text-white', showDots: false, selection: 'selection:bg-white selection:text-[#2433FF]' };
+    // Page Média en blanc
     if (path.startsWith('/media') || path.startsWith('/article')) return { bg: 'bg-white', text: 'text-black', navBg: 'bg-[#0A0A0C]/90 border-white/10', navText: 'text-white', showDots: false, selection: 'selection:bg-[#2433FF] selection:text-white' };
+    // Le reste en noir (Défaut)
     return { bg: 'bg-[#0A0A0C]', text: 'text-white', navBg: 'bg-[#0A0A0C]/90 border-white/10', navText: 'text-white', showDots: true, selection: 'selection:bg-[#2433FF] selection:text-white' };
   };
   const theme = getPageTheme();
 
+  // Logique Expertises (Calcul dynamique)
   const uniqueCategories = projects ? [...new Set(Object.values(projects).map(p => p.category))].filter(Boolean) : [];
   const dynamicExpertises = uniqueCategories.map(cat => {
     const firstProject = Object.values(projects).find(p => p.category === cat);
@@ -160,7 +176,7 @@ function CobaltApp() {
       
       <main className="pt-24 min-h-screen relative z-10">
         <AnimatedRoutes 
-          // 3. ON TRANSMET TOUT AUX ROUTES
+          // 3. PASSAGE DES PROPS
           home={home}
           projects={projects}
           activeExpertises={activeExpertises}
@@ -173,12 +189,13 @@ function CobaltApp() {
           pageCobaltPlus={pageCobaltPlus}
           pageAtelier={pageAtelier}
           
-          // LES NOUVELLES PROPS :
           pageMedia={pageMedia}
           pageAsso={pageAsso}
           pageAgence={pageAgence}
           pageProjects={pageProjects}
           pageEshop={pageEshop}
+          
+          assoPrograms={assoPrograms} // <--- ON TRANSMET ICI
           
           onOpenContact={() => setShowContactModal(true)}
         />
@@ -207,6 +224,8 @@ export default function App() {
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
         .animate-marquee { animation: marquee 20s linear infinite; }
         .glass { backdrop-filter: blur(12px); background: rgba(10, 10, 12, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Pour les titres outline (2026 en bas de page Asso) */
+        .outline-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); color: transparent; }
       `}</style>
       <CobaltApp />
     </Router>

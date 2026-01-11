@@ -24,6 +24,7 @@ export const useCobaltData = () => {
     products: staticProducts, 
     shopCollections: [], 
     team: staticTeam,
+    assoPrograms: [], // <--- NOUVEAU : On stocke les programmes ici
     
     navigation: [],
     home: null,
@@ -45,15 +46,15 @@ export const useCobaltData = () => {
       try {
         console.log("📡 Chargement Global Strapi...");
 
-        // On veut TOUT savoir sur les produits (images, collection liée, etc.)
         const productParams = new URLSearchParams();
         productParams.append('populate', '*'); 
         
-        const collectionParams = new URLSearchParams();
-        collectionParams.append('populate', '*');
+        const standardParams = new URLSearchParams();
+        standardParams.append('populate', '*');
 
         const [
             resProjects, resArticles, resProducts, resTeam, resCollections,
+            resAssoPrograms, // <--- NOUVEAU FETCH
             resNav, resHome,
             resServices, resAtelierServices,
             resCobaltPlus, resAtelier,
@@ -64,7 +65,9 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?${productParams}`), 
           fetch(`${STRAPI_URL}/api/team-members?populate=*&sort=rang:asc`), 
-          fetch(`${STRAPI_URL}/api/shop-collections?${collectionParams}`), // On charge les Drops
+          fetch(`${STRAPI_URL}/api/shop-collections?populate=*`),
+          
+          fetch(`${STRAPI_URL}/api/asso-programs?populate=*&sort=rank:asc`), // <--- LIGNE AJOUTÉE
 
           fetch(`${STRAPI_URL}/api/navigation?populate=*`),
           fetch(`${STRAPI_URL}/api/homepage?populate[hero][populate]=*&populate[blocks][populate]=*`),
@@ -87,21 +90,31 @@ export const useCobaltData = () => {
             return json.data?.attributes || json.data || null;
         };
 
-        // --- TRAITEMENT DES PRODUITS (NOUVELLE LOGIQUE) ---
+        // --- TRAITEMENT DES PROGRAMMES ASSO ---
+        if (resAssoPrograms.ok) {
+            const d = await resAssoPrograms.json();
+            if (d.data) {
+                newData.assoPrograms = d.data.map(item => {
+                    const attrs = item.attributes || item;
+                    return {
+                        id: item.id || item.documentId,
+                        ...attrs,
+                        image: makeUrl(attrs.image?.data || attrs.image),
+                        slug: attrs.slug // On garde le slug pour l'URL
+                    };
+                });
+            }
+        }
+
+        // (Le reste du traitement reste identique...)
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) {
                 newData.products = d.data.map(item => {
                     const attrs = item.attributes || item;
-                    
-                    // Galerie Images
                     const rawImages = attrs.gallery?.data || attrs.gallery || [];
                     const gallery = Array.isArray(rawImages) ? rawImages.map(img => makeUrl(img)) : [];
-                    
-                    // Cover (soit champ cover, soit 1ere image galerie)
                     const coverUrl = makeUrl(attrs.cover?.data) || gallery[0] || null;
-
-                    // Liaison Collection (Drop)
                     const colData = attrs.shop_collection?.data;
                     const collectionId = colData?.id || colData?.documentId || null;
 
@@ -110,21 +123,17 @@ export const useCobaltData = () => {
                         ...attrs,
                         image: coverUrl,
                         gallery: gallery,
-                        // Champs cruciaux pour ta logique :
-                        stock: attrs.stock !== undefined ? attrs.stock : 0, // Par défaut 0 si vide
+                        stock: attrs.stock !== undefined ? attrs.stock : 0,
                         category: attrs.category || "Divers",
-                        collectionId: collectionId, // Pour grouper par Drop
+                        collectionId: collectionId,
                         limitedLabel: attrs.limitedLabel
                     };
                 });
             }
         }
-
-        // --- TRAITEMENT DES DROPS (COLLECTIONS) ---
         if (resCollections.ok) {
             const d = await resCollections.json();
             if (d.data) {
-                // On trie peut-être par date de sortie inverse (le plus récent en haut)
                 newData.shopCollections = d.data.map(item => ({
                     id: item.id || item.documentId,
                     ...item.attributes || item,
@@ -132,13 +141,10 @@ export const useCobaltData = () => {
                 }));
             }
         }
-
         if (resTeam.ok) { 
              const t = await resTeam.json();
              if(t.data) newData.team = t.data;
         }
-
-        // (Le reste ne change pas...)
         if (resProjects.ok) {
            const d = await resProjects.json();
            if(d.data) {
