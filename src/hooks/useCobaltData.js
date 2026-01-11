@@ -30,19 +30,19 @@ export const useCobaltData = () => {
     home: null,
 
     // Pages HUBS (Les aiguillages)
-    pageCobaltPlus: null, // <-- NOUVEAU
-    pageAtelier: null,    // <-- NOUVEAU
+    pageCobaltPlus: null, 
+    pageAtelier: null,    
 
     // Pages Listes (Titres & Intros)
-    pageProjects: null,   // <-- NOUVEAU
-    pageEshop: null,      // <-- NOUVEAU
-    services: null,       // Prestations Archi
-    atelierServices: null,// Savoir-faire Atelier
+    pageProjects: null,   
+    pageEshop: null,      
+    services: null,       
+    atelierServices: null,
 
     // Pages Autonomes
-    pageMedia: null,      // <-- NOUVEAU
-    pageAsso: null,       // <-- NOUVEAU
-    pageAgence: null,     // <-- NOUVEAU
+    pageMedia: null,      
+    pageAsso: null,       
+    pageAgence: null,     
 
     isLoaded: false
   });
@@ -60,12 +60,12 @@ export const useCobaltData = () => {
         homeParams.append('populate[blocks][on][sections.approche-section][populate][cards][populate]', 'icon');
         homeParams.append('populate[blocks][on][sections.featured-section][populate]', 'leftImage');
 
-        // Hubs (Cobalt+ & Atelier) : On veut les cartes, les images ET les URLs
+        // Hubs (Cobalt+ & Atelier)
         const hubParams = new URLSearchParams();
         hubParams.append('populate[cards][populate]', 'image'); 
         const hubQuery = hubParams.toString();
 
-        // Standard (Pour tout le reste : Titres, Textes, Images simples)
+        // Standard
         const standardParams = new URLSearchParams();
         standardParams.append('populate', '*');
         const standardQuery = standardParams.toString();
@@ -89,7 +89,7 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
-          fetch(`${STRAPI_URL}/api/team-members?populate=*`), // Assure-toi que cette collection existe, sinon ça renverra vide sans planter
+          fetch(`${STRAPI_URL}/api/team-members?populate=*`), // <--- L'appel est bien là
 
           fetch(`${STRAPI_URL}/api/navigation?${standardQuery}`),
           fetch(`${STRAPI_URL}/api/homepage?${homeParams.toString()}`),
@@ -97,7 +97,6 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/page-prestations-archi?${standardQuery}`),
           fetch(`${STRAPI_URL}/api/page-savoir-faire?${standardQuery}`),
 
-          // NOUVEAUX APPELS
           fetch(`${STRAPI_URL}/api/page-cobalt-plus?${hubQuery}`),
           fetch(`${STRAPI_URL}/api/page-atelier?${hubQuery}`),
           
@@ -122,7 +121,7 @@ export const useCobaltData = () => {
 
         // --- 3. TRAITEMENT DES DONNÉES ---
 
-        // Collections (Logique existante préservée)
+        // Collections Projets
         if (resProjects.ok) {
            const d = await resProjects.json();
            if(d.data) {
@@ -146,16 +145,31 @@ export const useCobaltData = () => {
              newData.projects = formattedProjects;
            }
         }
+        
+        // Articles
         if (resArticles.ok) {
             const d = await resArticles.json();
             if (d.data) newData.articles = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes, image: makeUrl(i.attributes?.cover?.data || i.attributes?.cover) }));
         }
+        
+        // Produits
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) newData.products = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes, image: makeUrl(i.attributes?.cover?.data || i.attributes?.cover) }));
         }
+
+        // --- AJOUT CRUCIAL ICI : TRAITEMENT DE L'ÉQUIPE ---
+        if (resTeam.ok) {
+            const t = await resTeam.json();
+            if (t.data) {
+                // On met à jour la liste des membres avec les données Strapi
+                newData.team = t.data; 
+                console.log("👥 Équipe chargée :", t.data.length, "membres");
+            }
+        }
+        // --------------------------------------------------
         
-        // Single Types (Nouveaux & Anciens)
+        // Single Types
         newData.navigation = (await unwrap(resNav, "Menu"))?.mainNavigation || [];
         newData.home = await unwrap(resHome, "Home");
         
