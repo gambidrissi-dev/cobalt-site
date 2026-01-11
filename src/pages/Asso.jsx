@@ -3,8 +3,25 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Plus } from 'lucide-react';
 import { ScrollAnimation } from '../components/ui/CobaltComponents';
 
-export default function Asso({ onOpenContact }) {
+export default function Asso({ onOpenContact, pageContent }) {
 
+  // --- 1. DONNÉES STRAPI (Header) ---
+  const title = pageContent?.pageTitle || "L'ÉCOLE DU FAIRE";
+  const description = pageContent?.description || "Nous formons la prochaine génération d'architectes constructeurs. Immersion totale, chantiers réels et transmission de savoir-faire.";
+  const ctaLabel = pageContent?.ctaLabel || "CANDIDATER POUR 2025";
+  const ctaLink = pageContent?.ctaLink; // Lien optionnel depuis Strapi
+
+  // Fonction intelligente pour le bouton
+  const handleCtaClick = () => {
+    if (ctaLink) {
+      window.location.href = ctaLink; // Redirection si lien Strapi
+    } else {
+      onOpenContact(); // Sinon ouverture modale contact
+    }
+  };
+
+  // --- 2. DONNÉES STATIQUES (Les Piliers) ---
+  // On garde ça en dur car c'est structurel pour l'instant
   const pillars = [
     {
       id: "alternance",
@@ -30,29 +47,35 @@ export default function Asso({ onOpenContact }) {
   ];
 
   return (
-    <div className="animate-fade-in min-h-screen pt-32 pb-24 px-6 relative">
+    // Note: Le fond bleu #2433FF est géré par App.js via le thème
+    <div className="animate-fade-in min-h-screen pt-32 pb-24 px-6 relative text-white">
       
-      {/* 1. HEADER DE L'ASSO */}
+      {/* 1. HEADER DE L'ASSO (Connecté Strapi) */}
       <div className="max-w-7xl mx-auto mb-24">
         <div className="grid md:grid-cols-2 gap-12 items-end">
           
           <div>
             <span className="font-mono text-sm uppercase tracking-widest opacity-70 mb-4 block">/// Association Loi 1901</span>
+            {/* Titre dynamique */}
             <h1 className="cobalt-heading text-7xl md:text-9xl leading-[0.9] mb-6">
-              L'ÉCOLE<br/>DU FAIRE
+               {title.split(' ').map((word, i) => (
+                  <span key={i} className="block">{word}</span>
+               ))}
             </h1>
           </div>
 
           <div className="md:pb-4">
+             {/* Description dynamique */}
              <p className="text-xl md:text-2xl font-light leading-relaxed mb-8 opacity-90">
-               Nous formons la prochaine génération d'architectes constructeurs. 
-               Immersion totale, chantiers réels et transmission de savoir-faire.
+               {description}
              </p>
+             
+             {/* Bouton dynamique */}
              <button 
-                onClick={onOpenContact}
+                onClick={handleCtaClick}
                 className="bg-white text-[#2433FF] px-8 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-3"
              >
-                Candidater pour 2025 <ArrowRight className="w-4 h-4" />
+                {ctaLabel} <ArrowRight className="w-4 h-4" />
              </button>
           </div>
 
@@ -64,7 +87,6 @@ export default function Asso({ onOpenContact }) {
          <div className="grid md:grid-cols-3 gap-8">
             {pillars.map((item, i) => (
               <ScrollAnimation key={i} delay={i * 100} animation="slide-up">
-                {/* ON A REMPLACÉ LA DIV PAR UN LINK */}
                 <Link to={`/asso/${item.id}`} className="group border border-white/30 hover:border-white bg-[#2433FF] transition-colors duration-300 flex flex-col h-full cursor-pointer">
                    
                    <div className="aspect-[4/3] overflow-hidden border-b border-white/30 relative">
@@ -76,7 +98,7 @@ export default function Asso({ onOpenContact }) {
                       />
                    </div>
 
-                   <div className="p-8 flex flex-col flex-grow">
+                   <div className="p-8 flex flex-col flex-grow text-white">
                       <h3 className="cobalt-heading text-3xl mb-2">{item.title}</h3>
                       <span className="text-xs font-mono uppercase tracking-widest opacity-60 mb-6 block">{item.subtitle}</span>
                       
@@ -96,6 +118,7 @@ export default function Asso({ onOpenContact }) {
          </div>
       </div>
       
+      {/* 3. FOND DÉCORATIF */}
       <div className="fixed bottom-0 right-0 p-12 pointer-events-none opacity-10">
          <h2 className="text-[10rem] font-bold leading-none text-white outline-text">2025</h2>
       </div>
