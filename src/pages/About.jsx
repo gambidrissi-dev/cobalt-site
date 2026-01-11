@@ -5,26 +5,19 @@ import { getStrapiMedia } from '../lib/strapi';
 
 export default function About({ team, pageContent }) {
 
-  // 1. Données de la page (Haut)
   const title = pageContent?.pageTitle || "L'AGENCE";
-  const description = pageContent?.description || "Collectif d'architecture et de design basé entre Biarritz et Bordeaux. Nous concevons des espaces vivants et durables.";
+  const description = pageContent?.description || "Collectif d'architecture...";
   const email = pageContent?.email || "contact@collectifcobalt.eu";
   const instagram = pageContent?.instagram || "https://instagram.com";
   
-  const coverImage = pageContent?.cover?.data?.attributes?.url 
-    ? getStrapiMedia(pageContent.cover.data.attributes.url)
-    : null;
-
-  // 2. Helper pour l'image des membres
-  const getMemberImage = (member) => {
-      const img = member.attributes?.photo?.data?.attributes?.url || member.photo?.data?.attributes?.url;
-      return img ? getStrapiMedia(img) : null;
-  };
+  // Correction ici aussi pour l'image de couverture si elle est simplifiée
+  const coverData = pageContent?.cover?.data?.attributes || pageContent?.cover;
+  const coverImage = coverData?.url ? getStrapiMedia(coverData.url) : null;
 
   return (
     <div className="min-h-screen bg-[#0A0A0C] text-white pt-32 pb-20 px-4 md:px-8">
       
-      {/* --- HEADER AGENCE --- */}
+      {/* HEADER */}
       <div className="max-w-7xl mx-auto mb-20 grid md:grid-cols-2 gap-12 items-end">
          <div>
             <span className="text-[#2433FF] font-mono text-sm tracking-widest uppercase mb-4 block">
@@ -49,19 +42,15 @@ export default function About({ team, pageContent }) {
          </div>
       </div>
 
-      {/* --- IMAGE DE COUVERTURE --- */}
+      {/* COVER */}
       {coverImage && (
           <div className="max-w-7xl mx-auto mb-32 aspect-[21/9] bg-gray-900 overflow-hidden relative group">
               <div className="absolute inset-0 bg-[#2433FF]/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-multiply"></div>
-              <img 
-                src={coverImage} 
-                alt="L'agence" 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
-              />
+              <img src={coverImage} alt="Agence" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
           </div>
       )}
 
-      {/* --- L'ÉQUIPE (TEAM) --- */}
+      {/* TEAM LIST */}
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-12 border-b border-white/10 pb-4">
             <h2 className="text-2xl font-bold">L'ÉQUIPE</h2>
@@ -71,9 +60,15 @@ export default function About({ team, pageContent }) {
         {team && team.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {team.map((member) => {
+                    // Adaptation au JSON plat
                     const data = member.attributes || member;
                     const id = member.id;
-                    const imgUrl = getMemberImage(member);
+                    
+                    // On récupère l'image directement depuis .photo.url
+                    let imgUrl = null;
+                    if (data.photo && data.photo.url) {
+                        imgUrl = getStrapiMedia(data.photo.url);
+                    }
 
                     return (
                         <Link key={id} to={`/equipe/${id}`} className="group block">
@@ -81,7 +76,7 @@ export default function About({ team, pageContent }) {
                                 {imgUrl ? (
                                     <img src={imgUrl} alt={data.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-700 text-xs uppercase">Photo à venir</div>
+                                    <div className="w-full h-full flex items-center justify-center text-gray-700 text-xs uppercase border border-white/10">Photo à venir</div>
                                 )}
                             </div>
                             <h3 className="text-lg font-bold group-hover:text-[#2433FF] transition-colors">{data.name}</h3>
@@ -92,7 +87,7 @@ export default function About({ team, pageContent }) {
             </div>
         ) : (
             <div className="text-center py-20 border border-white/10 text-gray-500">
-                L'équipe est en cours de constitution sur Strapi.
+                Chargement de l'équipe...
             </div>
         )}
       </div>

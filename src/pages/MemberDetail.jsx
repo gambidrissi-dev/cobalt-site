@@ -7,7 +7,8 @@ export default function MemberDetail({ team }) {
   const { id } = useParams();
   
   // 1. Recherche du membre
-  const member = team ? team.find(m => m.id == id) : null;
+  // On utilise "==" pour que ça marche même si l'ID est un texte
+  const member = team ? team.find(m => m.id == id || m.documentId === id) : null;
 
   if (!member) return (
     <div className="min-h-screen bg-[#0A0A0C] flex flex-col items-center justify-center text-white">
@@ -18,27 +19,21 @@ export default function MemberDetail({ team }) {
     </div>
   );
 
+  // 2. Simplification (Ton JSON n'a pas de "attributes", tout est à la racine)
   const data = member.attributes || member;
 
-  // --- DEBUGGING (Regarde ta console F12 si ça ne marche toujours pas) ---
-  console.log("Données du membre :", data);
+  // 3. Récupération de l'image (Adapté à ton JSON)
+  // On regarde si "photo" existe, et on prend son "url" direct
+  let imgUrl = null;
+  if (data.photo && data.photo.url) {
+      imgUrl = getStrapiMedia(data.photo.url);
+  }
 
-  // 2. CHASSE À L'IMAGE (On cherche dans tous les noms possibles)
-  // Strapi range souvent l'image dans data.photo.data.attributes...
-  const possibleImageField = 
-      data.photo?.data?.attributes || 
-      data.image?.data?.attributes || 
-      data.picture?.data?.attributes ||
-      data.cover?.data?.attributes ||
-      data.photo || // Cas où populate serait différent
-      data.image;
-
-  const imgUrl = possibleImageField?.url ? getStrapiMedia(possibleImageField.url) : null;
-
-  // 3. Liens Sociaux
+  // 4. Liens & Infos
   const email = data.email;
-  const rawLinkedin = data.linkedin;
-  const rawInstagram = data.instagram;
+  const linkedin = data.linkedin;
+  const instagram = data.instagram;
+  const bio = data.bio;
 
   const formatUrl = (url) => {
     if (!url) return null;
@@ -63,8 +58,7 @@ export default function MemberDetail({ team }) {
                        <img src={imgUrl} className="w-full h-full object-cover" alt={data.name} />
                    ) : (
                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-700 text-xs p-4 text-center border border-dashed border-white/10">
-                           <span className="font-bold mb-2">Pas de photo trouvée</span>
-                           <span className="opacity-50">Vérifie que le champ s'appelle bien "photo" dans Strapi</span>
+                           <span className="opacity-50">Pas de photo</span>
                        </div>
                    )}
                 </div>
@@ -83,23 +77,22 @@ export default function MemberDetail({ team }) {
                 <div className="w-20 h-1 bg-white/20 mb-8"></div>
 
                 <div className="prose prose-lg prose-invert text-gray-300 font-light leading-relaxed whitespace-pre-line mb-12">
-                   {data.bio || "Biographie à venir..."}
+                   {bio || "Biographie à venir..."}
                 </div>
 
-                {/* LIENS SOCIAUX */}
                 <div className="flex flex-wrap gap-6 pt-8 border-t border-white/10">
                    {email && (
                        <a href={`mailto:${email}`} className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors clickable">
                           <Mail className="w-5 h-5" /> Contacter
                        </a>
                    )}
-                   {rawLinkedin && (
-                       <a href={formatUrl(rawLinkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors clickable">
+                   {linkedin && (
+                       <a href={formatUrl(linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors clickable">
                           <Linkedin className="w-5 h-5" /> LinkedIn
                        </a>
                    )}
-                   {rawInstagram && (
-                       <a href={formatUrl(rawInstagram)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors clickable">
+                   {instagram && (
+                       <a href={formatUrl(instagram)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors clickable">
                           <Instagram className="w-5 h-5" /> Instagram
                        </a>
                    )}
