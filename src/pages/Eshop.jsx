@@ -1,142 +1,198 @@
 import React, { useState, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ScrollAnimation } from '../components/ui/CobaltComponents';
 
-export default function Eshop({ products }) {
+export default function Eshop({ products, collections, pageContent }) {
   
-  const [searchParams] = useSearchParams();
-  const initialCategory = searchParams.get('cat') || 'Tout';
-  const [activeCategory, setActiveCategory] = useState(
-     ['Mobilier', 'Objets', 'Prints'].includes(initialCategory) ? initialCategory : 'Tout'
-  );
+  const title = pageContent?.pageTitle || "L'ATELIER";
+  const intro = pageContent?.description || "Objets manifestes, micro-séries et sélections d'outils. Fabriqué ou curaté à Biarritz.";
 
-  // 1. RÉCUPÉRATION DES DONNÉES STRAPI
-  // On utilise la prop 'products' reçue de App.jsx
-  const safeProducts = products || [];
+  const [activeCategory, setActiveCategory] = useState('Tout');
+  
+  // Catégories définies dans Strapi
+  const categories = ['Tout', 'Mobilier', 'Deco & Maison', 'Prints', 'Outils Archi'];
 
-  // Catégories dynamiques
-  const categories = ['Tout', 'Mobilier', 'Objets', 'Prints'];
-
+  // --- LOGIQUE DE TRI ---
+  // 1. On filtre d'abord par catégorie (Mobilier, Prints...)
   const filteredProducts = useMemo(() => {
-    if (activeCategory === 'Tout') return safeProducts;
-    return safeProducts.filter(p => p.category === activeCategory);
-  }, [activeCategory, safeProducts]);
+     if (activeCategory === 'Tout') return products;
+     return products.filter(p => p.category === activeCategory);
+  }, [products, activeCategory]);
+
+  // 2. On groupe par Collection (Drop)
+  // On ne garde que les collections qui ont des produits après filtrage
+  const activeDrops = useMemo(() => {
+     if (!collections) return [];
+     
+     return collections.map(col => {
+        // On cherche les produits qui appartiennent à ce Drop
+        const dropProducts = filteredProducts.filter(p => p.collectionId === col.id);
+        
+        if (dropProducts.length === 0) return null; // On cache le drop s'il est vide
+
+        return {
+           ...col,
+           products: dropProducts
+        };
+     }).filter(Boolean); // On retire les nulls
+  }, [collections, filteredProducts]);
+
+  // 3. Les Orphelins (Produits sans Drop)
+  const orphanProducts = useMemo(() => {
+      return filteredProducts.filter(p => !p.collectionId);
+  }, [filteredProducts]);
+
+
+  // --- COMPOSANT CARTE PRODUIT ---
+  const ProductCard = ({ product }) => {
+     // Logique des Badges
+     const isSoldOut = product.stock === 0;
+     const isUnique = product.stock === 1;
+     const isLowStock = product.stock > 1 && product.stock <= 5;
+
+     return (
+        <Link to={`/produit/${product.id}`} className="group block relative">
+            <div className="aspect-[4/5] bg-[#F5F5F5] overflow-hidden relative mb-4">
+                
+                {/* Image */}
+                {product.image ? (
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${isSoldOut ? 'grayscale opacity-70' : ''}`} 
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">NO IMAGE</div>
+                )}
+
+                {/* BADGES (Le cœur de ta rareté) */}
+                <div className="absolute top-2 left-2 flex flex-col gap-2 items-start">
+                    {isSoldOut && (
+                        <span className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1">
+                            Épuisé
+                        </span>
+                    )}
+                    {!isSoldOut && isUnique && (
+                        <span className="bg-[#2433FF] text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1">
+                            Pièce Unique
+                        </span>
+                    )}
+                    {!isSoldOut && isLowStock && (
+                        <span className="bg-white text-black border border-black text-[10px] font-bold uppercase tracking-widest px-2 py-1">
+                            Série Limitée {product.limitedLabel ? `(${product.limitedLabel})` : ''}
+                        </span>
+                    )}
+                </div>
+
+            </div>
+
+            {/* Infos */}
+            <div className="flex justify-between items-start">
+                <div>
+                    <h3 className="font-bold uppercase text-sm group-hover:text-[#2433FF] transition-colors">{product.name}</h3>
+                    <p className="text-xs text-gray-500 mt-1 capitalize">{product.category}</p>
+                </div>
+                <div className="text-sm font-mono text-right">
+                    {isSoldOut ? (
+                        <span className="text-gray-400 line-through text-xs">SOLD OUT</span>
+                    ) : (
+                        <span>{product.price} €</span>
+                    )}
+                </div>
+            </div>
+        </Link>
+     );
+  };
+
 
   return (
-    // 2. PASSAGE EN DARK MODE (Pour coller avec la page Atelier)
-    <div className="animate-fade-in min-h-screen pt-24 md:pt-32 pb-24 px-4 md:px-6 bg-[#0A0A0C] text-white selection:bg-[#2433FF] selection:text-white">
+    <div className="min-h-screen bg-white text-black pt-32 pb-20 px-4 md:px-8">
       
-      {/* HEADER E-SHOP */}
-      <div className="max-w-7xl mx-auto mb-8 md:mb-16">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8 md:pb-12">
-           <div>
-              <span className="text-[#2433FF] font-bold text-xs uppercase tracking-widest mb-2 md:mb-4 block">Éditions Limitées</span>
-              <h1 className="cobalt-heading text-5xl md:text-9xl leading-[0.9] tracking-tighter">
-                E-SHOP
-              </h1>
-           </div>
-           
-           <div className="flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-gray-500">
-             <span>{filteredProducts.length} Articles</span>
-             <span className="hidden md:inline">Livraison France & Europe</span>
-           </div>
-        </div>
+      {/* HEADER */}
+      <div className="max-w-7xl mx-auto mb-16 border-b border-black pb-8 flex flex-col md:flex-row justify-between items-end gap-8">
+         <h1 className="cobalt-heading text-6xl md:text-9xl tracking-tighter leading-none">
+             {title}
+         </h1>
+         <p className="md:max-w-md text-right text-gray-600 text-lg leading-relaxed">
+             {intro}
+         </p>
       </div>
 
-      {/* FILTRES (Scrollable Mobile) */}
-      <div className="sticky top-20 z-30 bg-[#0A0A0C]/90 backdrop-blur border-b border-white/10 py-4 mb-8 md:mb-12 -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="max-w-7xl mx-auto overflow-x-auto no-scrollbar">
-           <div className="flex items-center gap-6 md:gap-8 min-w-max">
+      {/* FILTRES */}
+      <div className="max-w-7xl mx-auto mb-20">
+          <div className="flex flex-wrap gap-8 justify-center md:justify-start">
               {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`text-xs md:text-sm font-bold uppercase tracking-widest transition-colors
-                    ${activeCategory === cat ? 'text-[#2433FF]' : 'text-gray-500 hover:text-white'}
-                  `}
-                >
-                  {cat}
-                </button>
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`text-xs font-bold uppercase tracking-widest pb-1 border-b-2 transition-all ${
+                        activeCategory === cat 
+                        ? 'text-[#2433FF] border-[#2433FF]' 
+                        : 'text-gray-400 border-transparent hover:text-black'
+                    }`}
+                  >
+                      {cat}
+                  </button>
               ))}
-           </div>
-        </div>
+          </div>
       </div>
 
-      {/* GRILLE PRODUITS */}
-      <div className="max-w-7xl mx-auto">
-         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16">
-            
-            {filteredProducts.length > 0 ? (
-               filteredProducts.map((product, i) => (
-                  <ScrollAnimation key={product.id} delay={i * 50} animation="slide-up">
-                     <Link to={`/produit/${product.id}`} className={`group block cursor-pointer ${!product.inStock ? 'pointer-events-none' : ''}`}>
-                        
-                        {/* 3. LOGIQUE STOCK & VISUEL */}
-                        <div className={`aspect-[3/4] overflow-hidden bg-gray-900 mb-4 relative border border-white/5 transition-all duration-500 
-                           ${!product.inStock ? 'opacity-50 grayscale border-white/10' : 'hover:border-white/20'}
-                        `}>
-                           
-                           {/* Badge Nouveauté (Seulement si en stock) */}
-                           {product.isNew && product.inStock && (
-                              <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-[#2433FF] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest z-10">
-                                 New
-                              </div>
-                           )}
+      <div className="max-w-7xl mx-auto space-y-32">
+        
+        {/* LISTE DES DROPS */}
+        {activeDrops.map((drop) => (
+            <section key={drop.id}>
+                {/* Header du Drop */}
+                <div className="mb-12 flex flex-col md:flex-row gap-8 items-start md:items-end justify-between">
+                    <div>
+                        <span className="text-[#2433FF] font-mono text-xs uppercase tracking-widest mb-2 block">
+                            Drop Collection
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-bold uppercase leading-none">
+                            {drop.title}
+                        </h2>
+                    </div>
+                    <p className="max-w-md text-sm text-gray-500 leading-relaxed text-right">
+                        {drop.description}
+                    </p>
+                </div>
 
-                           {/* Badge ÉPUISÉ (Si pas en stock) */}
-                           {!product.inStock && (
-                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                                 <div className="bg-black/80 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 uppercase tracking-widest whitespace-nowrap">
-                                    Épuisé
-                                 </div>
-                              </div>
-                           )}
-                           
-                           {/* Image */}
-                           {product.image ? (
-                              <img 
-                                 src={product.image} 
-                                 alt={product.title} 
-                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                              />
-                           ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">Image manquante</div>
-                           )}
-                           
-                           {/* Bouton rapide (Seulement si en stock) */}
-                           {product.inStock && (
-                              <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 hidden md:block z-20">
-                                 <div className="bg-white text-black py-3 text-center text-xs font-bold uppercase tracking-widest hover:bg-[#2433FF] hover:text-white transition-colors">
-                                    Voir le produit
-                                 </div>
-                              </div>
-                           )}
-                        </div>
+                {/* Grille Produits du Drop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+                    {drop.products.map((p, i) => (
+                        <ScrollAnimation key={p.id} delay={i * 50}>
+                            <ProductCard product={p} />
+                        </ScrollAnimation>
+                    ))}
+                </div>
+            </section>
+        ))}
 
-                        {/* Infos Produit */}
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-1">
-                           <div>
-                              <h3 className="text-sm md:text-lg font-bold leading-tight group-hover:text-[#2433FF] transition-colors">
-                                 {product.title}
-                              </h3>
-                              <span className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">{product.category}</span>
-                           </div>
-                           <span className="text-sm md:text-lg font-mono font-medium md:font-bold mt-1 md:mt-0 text-white">
-                              {product.price}€
-                           </span>
-                        </div>
+        {/* PRODUITS HORS COLLECTION (S'il y en a) */}
+        {orphanProducts.length > 0 && (
+            <section>
+                 <div className="mb-12 border-t border-black/10 pt-12">
+                    <h2 className="text-2xl font-bold uppercase">Les Essentiels</h2>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+                    {orphanProducts.map((p, i) => (
+                        <ScrollAnimation key={p.id} delay={i * 50}>
+                            <ProductCard product={p} />
+                        </ScrollAnimation>
+                    ))}
+                 </div>
+            </section>
+        )}
 
-                     </Link>
-                  </ScrollAnimation>
-               ))
-            ) : (
-               <div className="col-span-2 md:col-span-3 py-24 text-center text-gray-500 font-mono">
-                  Aucun produit trouvé dans cette catégorie.
-               </div>
-            )}
+        {/* SI RIEN NE MATCHE */}
+        {activeDrops.length === 0 && orphanProducts.length === 0 && (
+            <div className="py-20 text-center text-gray-400 font-mono">
+                Aucune pièce disponible dans cette catégorie pour le moment.
+            </div>
+        )}
 
-         </div>
       </div>
+
     </div>
   );
 }

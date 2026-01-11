@@ -1,129 +1,154 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Truck, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Check, Ruler, Box, AlertCircle } from 'lucide-react';
 
 export default function ProductDetail({ products }) {
   const { id } = useParams();
-  const navigate = useNavigate();
+  
+  // Recherche robuste de l'ID
+  const product = products ? products.find(p => p.id == id || p.documentId == id) : null;
+  
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  // Scroll en haut de page au chargement
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
+  if (!product) return (
+    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center text-black">
+       <div className="mb-4">Objet introuvable...</div>
+       <Link to="/eshop" className="border-b border-black">Retour</Link>
+    </div>
+  );
 
-  // 1. RECHERCHE SÉCURISÉE
-  const safeProducts = products || [];
-  // On compare les ID en String pour éviter les soucis de type (1 vs "1")
-  const product = safeProducts.find(p => String(p.id) === String(id));
+  // LOGIQUE DE STOCK
+  const isSoldOut = product.stock === 0;
+  
+  // Construction du mail de commande
+  const mailSubject = `Commande : ${product.name} (Ref: ${product.id})`;
+  const mailBody = `Bonjour l'Atelier,\n\nJe souhaite acquérir la pièce "${product.name}".\nMerci de me confirmer la disponibilité et les frais de port.\n\nCordialement.`;
+  const mailToLink = `mailto:atelier@collectifcobalt.eu?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
 
-  // 2. ÉTAT DE CHARGEMENT / INTROUVABLE
-  if (!product) {
-     return (
-        <div className="min-h-screen bg-[#0A0A0C] flex flex-col justify-center items-center text-white gap-4">
-           <p className="font-mono animate-pulse">Chargement du produit...</p>
-           <button onClick={() => navigate('/eshop')} className="text-[#2433FF] text-sm border-b border-[#2433FF] pb-1">
-              Retour à la boutique
-           </button>
-        </div>
-     );
-  }
-
-  // 3. AFFICHAGE
   return (
-    <div className="animate-fade-in bg-[#0A0A0C] min-h-screen z-50 text-white selection:bg-[#2433FF] selection:text-white">
-       
-       {/* NAVIGATION */}
-       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-12">
-          <button 
-             onClick={() => navigate('/eshop')} 
-             className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-8 hover:text-white transition-colors duration-200 flex items-center gap-2"
-          >
-             <ArrowLeft className="w-4 h-4" /> Retour E-Shop
-          </button>
-          
-          <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-start">
-             
-             {/* COLONNE IMAGE */}
-             <div className="aspect-[3/4] bg-gray-900 border border-white/10 overflow-hidden relative group">
-                {product.image ? (
-                   <img 
-                      src={product.image} 
-                      className={`w-full h-full object-cover transition-all duration-700 ${!product.inStock ? 'grayscale opacity-60' : 'group-hover:scale-105'}`} 
-                      alt={product.title} 
-                   />
+    <div className="animate-fade-in min-h-screen bg-[#F5F5F5] text-black pt-32 pb-20 px-4 md:px-8">
+      
+      <Link to="/eshop" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-[#2433FF] transition-colors mb-8">
+        <ArrowLeft size={14} /> Retour à l'atelier
+      </Link>
+
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 lg:gap-24">
+        
+        {/* GALERIE */}
+        <div className="flex flex-col gap-4 sticky top-32 h-fit">
+            <div className="aspect-square bg-white overflow-hidden relative border border-black/5 group">
+                {product.gallery && product.gallery[selectedImage] ? (
+                    <img 
+                        src={product.gallery[selectedImage]} 
+                        alt={product.name} 
+                        className={`w-full h-full object-cover ${isSoldOut ? 'grayscale' : ''}`}
+                    />
                 ) : (
-                   <div className="w-full h-full flex items-center justify-center text-gray-600 font-mono text-xs">Image non disponible</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">Pas d'image</div>
                 )}
-
-                {/* Badge Nouveauté */}
-                {product.isNew && product.inStock && (
-                   <div className="absolute top-4 left-4 bg-[#2433FF] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest">
-                      Nouveauté
-                   </div>
-                )}
-             </div>
-
-             {/* COLONNE INFOS */}
-             <div className="md:sticky md:top-32">
                 
-                <span className="text-[#2433FF] font-bold text-xs uppercase tracking-widest mb-4 block">
-                   {product.category || "Édition"}
+                {/* Badge sur la photo */}
+                {isSoldOut && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                        <span className="bg-red-600 text-white px-4 py-2 text-sm font-bold uppercase tracking-widest">Épuisé</span>
+                    </div>
+                )}
+            </div>
+            
+            {/* Miniatures */}
+            {product.gallery && product.gallery.length > 1 && (
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                    {product.gallery.map((img, idx) => (
+                        <button 
+                            key={idx}
+                            onClick={() => setSelectedImage(idx)}
+                            className={`w-20 h-20 flex-shrink-0 border transition-all ${selectedImage === idx ? 'border-[#2433FF] opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                        >
+                            <img src={img} className="w-full h-full object-cover" alt="" />
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        {/* INFOS */}
+        <div className="flex flex-col">
+            <span className="text-[#2433FF] font-bold uppercase tracking-widest text-xs mb-4">
+                {product.category}
+            </span>
+            
+            <h1 className="cobalt-heading text-5xl md:text-6xl mb-6 leading-none">
+                {product.name}
+            </h1>
+
+            <div className="flex items-center gap-4 mb-8">
+                <span className="text-3xl font-light font-mono">
+                    {product.price} €
                 </span>
-                
-                <h1 className="cobalt-heading text-5xl md:text-6xl mb-6 leading-none">
-                   {product.title}
-                </h1>
-                
-                <p className="text-3xl font-light mb-8 font-mono">
-                   {product.price}€
-                </p>
-                
-                <hr className="border-white/10 mb-8" />
-                
-                {/* Description avec fallback */}
-                <div className="prose prose-invert prose-p:text-gray-400 prose-p:font-light mb-12 leading-relaxed">
-                   {product.description || product.desc || "Description détaillée à venir. Cette pièce est fabriquée dans notre atelier avec le plus grand soin et des matériaux sourcés localement."}
-                </div>
-                
-                {/* LOGIQUE DE STOCK & BOUTON */}
-                <div className="space-y-6">
-                   {product.inStock ? (
-                      // CAS 1 : EN STOCK
-                      <button className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest hover:bg-[#2433FF] hover:text-white transition-all duration-300">
-                         Ajouter au panier
-                      </button>
-                   ) : (
-                      // CAS 2 : ÉPUISÉ
-                      <button disabled className="w-full bg-gray-800 text-gray-500 py-4 font-bold uppercase tracking-widest cursor-not-allowed border border-white/10 flex items-center justify-center gap-2">
-                         Rupture de stock
-                      </button>
-                   )}
-                   
-                   {/* Infos Livraison / Stock */}
-                   <div className="flex flex-col gap-3 text-xs text-gray-500 font-mono uppercase tracking-wider pt-4">
-                      {product.inStock ? (
-                         <>
-                           <div className="flex items-center gap-3">
-                              <Check className="w-4 h-4 text-[#2433FF]" /> 
-                              <span>En stock, expédition immédiate</span>
-                           </div>
-                           <div className="flex items-center gap-3">
-                              <Truck className="w-4 h-4 text-[#2433FF]" /> 
-                              <span>Livraison France (2-4 jours)</span>
-                           </div>
-                         </>
-                      ) : (
-                         <div className="flex items-center gap-3 text-red-400">
-                            <Info className="w-4 h-4" /> 
-                            <span>Victime de son succès - Réassort en cours</span>
-                         </div>
-                      )}
-                   </div>
-                </div>
+                {product.limitedLabel && (
+                     <span className="bg-black text-white text-[10px] font-bold uppercase px-2 py-1 tracking-widest">
+                         {product.limitedLabel}
+                     </span>
+                )}
+            </div>
 
-             </div>
-          </div>
-       </div>
+            <div className="w-full h-px bg-black/10 mb-8"></div>
+
+            <div className="prose prose-lg text-gray-600 mb-12 leading-relaxed">
+                {product.description}
+            </div>
+
+            {/* Fiche Technique */}
+            <div className="bg-white p-8 border border-black/5 space-y-4 mb-12">
+                <h3 className="font-bold uppercase tracking-widest text-xs mb-4">Détails</h3>
+                
+                {product.dimensions && (
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <Ruler size={18} className="text-[#2433FF]" />
+                        <span>Dimensions : <span className="text-black font-medium">{product.dimensions}</span></span>
+                    </div>
+                )}
+                
+                {product.material && (
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <Box size={18} className="text-[#2433FF]" />
+                        <span>Matériaux : <span className="text-black font-medium">{product.material}</span></span>
+                    </div>
+                )}
+
+                {product.stock > 0 && product.stock <= 5 && (
+                    <div className="flex items-center gap-4 text-sm text-[#2433FF]">
+                        <AlertCircle size={18} />
+                        <span className="font-bold">Attention, plus que {product.stock} exemplaire{product.stock > 1 ? 's' : ''} !</span>
+                    </div>
+                )}
+            </div>
+
+            {/* ACTION */}
+            {isSoldOut ? (
+                <button 
+                    disabled 
+                    className="bg-gray-200 text-gray-400 py-6 px-8 text-center font-bold uppercase tracking-widest cursor-not-allowed"
+                >
+                    Victime de son succès
+                </button>
+            ) : (
+                <a 
+                    href={mailToLink}
+                    className="bg-[#2433FF] text-white py-6 px-8 text-center font-bold uppercase tracking-widest hover:bg-black transition-colors"
+                >
+                    Commander cette pièce
+                </a>
+            )}
+            
+            {!isSoldOut && (
+                <p className="text-xs text-center text-gray-400 mt-4">
+                    Paiement sécurisé et livraison organisée par échange de mail.
+                </p>
+            )}
+
+        </div>
+      </div>
     </div>
   );
 }
