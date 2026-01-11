@@ -13,7 +13,7 @@ import { DotGridBackground } from './components/ui/CobaltComponents';
 import PageTransition from './components/ui/PageTransition';
 
 // Pages
-import HubPage from './pages/HubPage'; // <--- NOUVEAU IMPORT
+import HubPage from './pages/HubPage';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Services from './pages/Services';
@@ -30,8 +30,14 @@ import Asso from './pages/Asso';
 import AssoDetail from './pages/AssoDetail';
 import Home from './pages/Home';
 
-// On ajoute les nouvelles props pageCobaltPlus et pageAtelier
-function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCollections, team, home, services, atelierServices, pageCobaltPlus, pageAtelier, navigation, onOpenContact }) {
+// 1. ON AJOUTE LES NOUVELLES PROPS DANS LA DÉFINITION
+function AnimatedRoutes({ 
+  projects, activeExpertises, products, articles, shopCollections, team, home, 
+  services, atelierServices, 
+  pageCobaltPlus, pageAtelier, 
+  pageMedia, pageAsso, pageAgence, pageProjects, pageEshop, // <--- AJOUTS ICI
+  navigation, onOpenContact 
+}) {
   const location = useLocation();
 
   return (
@@ -44,46 +50,52 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
           </PageTransition>
         } />
         
-        {/* --- COBALT + (Via HubPage) --- */}
+        {/* --- COBALT + --- */}
         <Route path="/cobalt-plus" element={
           <PageTransition>
             <HubPage 
                content={pageCobaltPlus} 
                defaultTitle="COBALT +" 
-               defaultLinks={['/projets', '/prestations']} // Fallback si Strapi est vide
+               defaultLinks={['/projets', '/prestations']} 
             />
           </PageTransition>
         } />
 
-        <Route path="/projets" element={<PageTransition><Projects projects={projects} expertises={activeExpertises} /></PageTransition>} />
+        {/* ON PASSE LE CONTENU AUX PROJETS */}
+        <Route path="/projets" element={<PageTransition><Projects projects={projects} expertises={activeExpertises} pageContent={pageProjects} /></PageTransition>} />
         <Route path="/projet/:id" element={<PageTransition><ProjectDetail projects={projects} /></PageTransition>} />
+        
         <Route path="/prestations" element={<PageTransition><Services servicesContent={services} /></PageTransition>} />
         <Route path="/prestation/:id" element={<PageTransition><ServiceDetail /></PageTransition>} />
 
-        {/* --- ATELIER (Via HubPage) --- */}
+        {/* --- ATELIER --- */}
         <Route path="/atelier" element={
           <PageTransition>
             <HubPage 
                content={pageAtelier} 
                defaultTitle="L'ATELIER" 
-               defaultLinks={['/eshop', '/atelier-savoir-faire']} // Fallback
+               defaultLinks={['/eshop', '/atelier-savoir-faire']}
             />
           </PageTransition>
         } />
 
         <Route path="/atelier-savoir-faire" element={<PageTransition><AtelierSavoirFaire content={atelierServices} /></PageTransition>} />
         
-        <Route path="/eshop" element={<PageTransition><Eshop products={products} collections={shopCollections} /></PageTransition>} />
+        {/* ON PASSE LE CONTENU AU ESHOP */}
+        <Route path="/eshop" element={<PageTransition><Eshop products={products} collections={shopCollections} pageContent={pageEshop} /></PageTransition>} />
         <Route path="/collection/:id" element={<PageTransition><CollectionDetail collections={shopCollections} products={products} /></PageTransition>} />
         <Route path="/produit/:id" element={<PageTransition><ProductDetail products={products} /></PageTransition>} />
         
-        <Route path="/media" element={<PageTransition><Media articles={articles} /></PageTransition>} />
+        {/* ON PASSE LE CONTENU AU MÉDIA */}
+        <Route path="/media" element={<PageTransition><Media articles={articles} pageContent={pageMedia} /></PageTransition>} />
         <Route path="/article/:id" element={<PageTransition><ArticleDetail articles={articles} /></PageTransition>} />
         
-        <Route path="/asso" element={<PageTransition><Asso onOpenContact={onOpenContact} /></PageTransition>} />
+        {/* ON PASSE LE CONTENU À L'ASSO (C'est ça qui corrige ton bug 2026) */}
+        <Route path="/asso" element={<PageTransition><Asso onOpenContact={onOpenContact} pageContent={pageAsso} /></PageTransition>} />
         <Route path="/asso/:id" element={<PageTransition><AssoDetail onOpenContact={onOpenContact} /></PageTransition>} />
         
-        <Route path="/about" element={<PageTransition><About team={team} /></PageTransition>} />
+        {/* ON PASSE LE CONTENU À L'AGENCE */}
+        <Route path="/about" element={<PageTransition><About team={team} pageContent={pageAgence} /></PageTransition>} />
         <Route path="/equipe/:id" element={<PageTransition><MemberDetail team={team} /></PageTransition>} />
 
       </Routes>
@@ -94,17 +106,17 @@ function AnimatedRoutes({ projects, activeExpertises, products, articles, shopCo
 function CobaltApp() {
   const location = useLocation();
   
-  // On récupère TOUT depuis le hook mis à jour
+  // 2. ON RÉCUPÈRE TOUTES LES DONNÉES DU HOOK
   const { 
       projects, products, articles, team, 
       home, navigation, services, atelierServices,
-      pageCobaltPlus, pageAtelier, // <--- Nouveaux
+      pageCobaltPlus, pageAtelier, 
+      pageMedia, pageAsso, pageAgence, pageProjects, pageEshop, // <--- AJOUTS ICI
       loading 
   } = useCobaltData();
 
   const [showContactModal, setShowContactModal] = useState(false);
 
-  // Loading Screen
   if (loading) {
     return (
       <div className="h-screen w-full bg-[#0A0A0C] flex items-center justify-center text-white">
@@ -116,7 +128,6 @@ function CobaltApp() {
     );
   }
 
-  // Thème
   const getPageTheme = () => {
     const path = location.pathname;
     if (path.startsWith('/asso')) return { bg: 'bg-[#2433FF]', text: 'text-white', navBg: 'bg-[#0A0A0C]/90 border-white/20', navText: 'text-white', showDots: false, selection: 'selection:bg-white selection:text-[#2433FF]' };
@@ -125,7 +136,6 @@ function CobaltApp() {
   };
   const theme = getPageTheme();
 
-  // Expertises
   const uniqueCategories = projects ? [...new Set(Object.values(projects).map(p => p.category))].filter(Boolean) : [];
   const dynamicExpertises = uniqueCategories.map(cat => {
     const firstProject = Object.values(projects).find(p => p.category === cat);
@@ -150,7 +160,7 @@ function CobaltApp() {
       
       <main className="pt-24 min-h-screen relative z-10">
         <AnimatedRoutes 
-          // On passe toutes les props ici
+          // 3. ON TRANSMET TOUT AUX ROUTES
           home={home}
           projects={projects}
           activeExpertises={activeExpertises}
@@ -160,8 +170,16 @@ function CobaltApp() {
           team={team}
           services={services}
           atelierServices={atelierServices}
-          pageCobaltPlus={pageCobaltPlus} // <--- Passé ici
-          pageAtelier={pageAtelier}       // <--- Passé ici
+          pageCobaltPlus={pageCobaltPlus}
+          pageAtelier={pageAtelier}
+          
+          // LES NOUVELLES PROPS :
+          pageMedia={pageMedia}
+          pageAsso={pageAsso}
+          pageAgence={pageAgence}
+          pageProjects={pageProjects}
+          pageEshop={pageEshop}
+          
           onOpenContact={() => setShowContactModal(true)}
         />
       </main>
@@ -174,7 +192,6 @@ function CobaltApp() {
 export default function App() {
   return (
     <Router>
-       {/* Styles... */}
        <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Nothing+You+Could+Do&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0A0A0C; color: white; overflow-x: hidden; cursor: none; }
