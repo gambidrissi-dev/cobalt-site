@@ -89,8 +89,7 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
           fetch(`${STRAPI_URL}/api/products?populate=*`),
-          fetch(`${STRAPI_URL}/api/team-members?populate=*`), // <--- L'appel est bien là
-
+          fetch(`${STRAPI_URL}/api/team-members?populate=*&sort=rang:asc`),
           fetch(`${STRAPI_URL}/api/navigation?${standardQuery}`),
           fetch(`${STRAPI_URL}/api/homepage?${homeParams.toString()}`),
 
