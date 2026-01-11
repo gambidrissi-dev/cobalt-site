@@ -44,28 +44,20 @@ export const useCobaltData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("📡 Chargement Global Strapi...");
+        console.log("🚀 DÉMARRAGE DU CHARGEMENT STRAPI...");
 
-        const productParams = new URLSearchParams();
-        productParams.append('populate', '*'); 
-        
-        const collectionParams = new URLSearchParams();
-        collectionParams.append('populate', '*'); // Important pour avoir la liste des produits dedans
-
+        // On utilise populate=* pour tout récupérer
         const [
             resProjects, resArticles, resProducts, resTeam, resCollections,
-            resAssoPrograms,
-            resNav, resHome,
-            resServices, resAtelierServices,
-            resCobaltPlus, resAtelier,
-            resPageProjets, resPageEshop,
+            resAssoPrograms, resNav, resHome, resServices, resAtelierServices,
+            resCobaltPlus, resAtelier, resPageProjets, resPageEshop,
             resMedia, resAsso, resAgence
         ] = await Promise.all([
           fetch(`${STRAPI_URL}/api/projects?populate=*`),
           fetch(`${STRAPI_URL}/api/articles?populate=*`),
-          fetch(`${STRAPI_URL}/api/products?${productParams}`), 
+          fetch(`${STRAPI_URL}/api/products?populate=*`), 
           fetch(`${STRAPI_URL}/api/team-members?populate=*&sort=rang:asc`), 
-          fetch(`${STRAPI_URL}/api/shop-collections?${collectionParams}`), 
+          fetch(`${STRAPI_URL}/api/shop-collections?populate=*`), 
           fetch(`${STRAPI_URL}/api/asso-programs?populate=*&sort=rank:asc`), 
 
           fetch(`${STRAPI_URL}/api/navigation?populate=*`),
@@ -89,91 +81,79 @@ export const useCobaltData = () => {
             return json.data?.attributes || json.data || null;
         };
 
-        // --- 1. PRÉPARATION DES LISTES VIDES ---
-        let processedProducts = [];
-        let processedCollections = [];
+        // --- 1. CHARGEMENT DES COLLECTIONS ---
+        let loadedCollections = [];
+        if (resCollections.ok) {
+            const d = await resCollections.json();
+            if (d.data) {
+                loadedCollections = d.data.map(item => ({
+                    id: item.id || item.documentId,
+                    strapiId: item.id, // ID numérique important pour la comparaison
+                    ...item.attributes || item,
+                    image: makeUrl(item.attributes?.cover?.data || item.cover),
+                    // On récupère la liste des produits liés dans cette collection
+                    linkedProducts: item.attributes?.products?.data || item.products || []
+                }));
+            }
+        }
+        newData.shopCollections = loadedCollections;
+        console.log(`📂 ${loadedCollections.length} Collections chargées :`, loadedCollections);
 
-        // --- 2. TRAITEMENT DES PRODUITS (Base) ---
+        // --- 2. CHARGEMENT DES PRODUITS ---
         if (resProducts.ok) {
             const d = await resProducts.json();
             if (d.data) {
-                processedProducts = d.data.map(item => {
+                newData.products = d.data.map(item => {
                     const attrs = item.attributes || item;
                     
+                    // Gestion Images
                     const rawImages = attrs.gallery?.data || attrs.gallery || [];
                     const gallery = Array.isArray(rawImages) ? rawImages.map(img => makeUrl(img)) : [];
                     const coverUrl = makeUrl(attrs.cover?.data) || gallery[0] || null;
 
-                    // Essai de lien via le produit (souvent vide)
+                    // --- LOGIQUE DE LIEN (SIMPLIFIÉE) ---
+                    let foundCollectionId = null;
+
+                    // Méthode A : Le produit connaît sa collection
                     const rawCol = attrs.shop_collection || attrs.shopCollection;
                     const colData = rawCol?.data || rawCol;
-                    let collectionId = colData?.id || colData?.documentId || null;
+                    if (colData) {
+                        foundCollectionId = colData.id || colData.documentId;
+                    }
+
+                    // Méthode B : La collection connaît le produit (Lien Inverse)
+                    if (!foundCollectionId) {
+                        const parentCol = loadedCollections.find(col => 
+                            col.linkedProducts.some(pLink => pLink.id === item.id)
+                        );
+                        if (parentCol) {
+                            foundCollectionId = parentCol.id;
+                            console.log(`🔗 Lien trouvé pour ${attrs.name} -> Collection ${parentCol.title}`);
+                        }
+                    }
 
                     return {
-                        id: item.id || item.documentId, // On garde les deux ID pour être sûr
-                        strapiId: item.id,
+                        id: item.id || item.documentId,
                         ...attrs,
                         image: coverUrl,
                         gallery: gallery,
-                        stock: attrs.stock !== undefined ? attrs.stock : 0,
-                        category: attrs.category || attrs.Category || "Divers",
-                        collectionId: collectionId, 
+                        stock: Number(attrs.stock || 0), // Force en nombre
+                        // Gestion Majuscule/Minuscule pour Category
+                        category: attrs.Category || attrs.category || "Divers", 
+                        collectionId: foundCollectionId, 
                         limitedLabel: attrs.limitedLabel
                     };
                 });
+                console.log(`📦 ${newData.products.length} Produits chargés :`, newData.products);
             }
+        } else {
+            console.error("❌ Erreur chargement Produits (Check URL ou Permissions)");
         }
 
-        // --- 3. TRAITEMENT DES COLLECTIONS ---
-        if (resCollections.ok) {
-            const d = await resCollections.json();
-            if (d.data) {
-                processedCollections = d.data.map(item => {
-                    // Récupération des produits DANS la collection
-                    const productsInCol = item.attributes?.products?.data || item.products || [];
-                    
-                    return {
-                        id: item.id || item.documentId,
-                        strapiId: item.id,
-                        ...item.attributes || item,
-                        image: makeUrl(item.attributes?.cover?.data || item.cover),
-                        // On garde la liste brute pour faire le lien inverse
-                        rawProductsList: productsInCol 
-                    };
-                });
-            }
-        }
-
-        // --- 4. LE CORRECTIF MAGIQUE (Lien Inverse) ---
-        // Si le produit n'a pas trouvé sa collection, la collection va réclamer son produit.
-        processedCollections.forEach(col => {
-            if (col.rawProductsList && col.rawProductsList.length > 0) {
-                col.rawProductsList.forEach(pInCol => {
-                    // On cherche ce produit dans notre liste principale
-                    const productToUpdate = processedProducts.find(p => p.strapiId === pInCol.id || p.id === pInCol.id);
-                    
-                    if (productToUpdate) {
-                        console.log(`🔗 Lien forcé : Produit ${productToUpdate.name} -> Collection ${col.title}`);
-                        productToUpdate.collectionId = col.id; // On force l'ID de la collection
-                    }
-                });
-            }
-        });
-
-        // On assigne les listes corrigées
-        newData.products = processedProducts;
-        newData.shopCollections = processedCollections;
-
-
-        // (Le reste ne change pas)
+        // (Le reste du code reste identique...)
         if (resAssoPrograms.ok) {
-            const d = await resAssoPrograms.json();
-            if (d.data) {
-                newData.assoPrograms = d.data.map(item => {
-                    const attrs = item.attributes || item;
-                    return { id: item.id || item.documentId, ...attrs, image: makeUrl(attrs.image?.data || attrs.image), slug: attrs.slug };
-                });
-            }
+             const d = await resAssoPrograms.json();
+             if (d.data) newData.assoPrograms = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes || i, image: makeUrl((i.attributes || i).image?.data || (i.attributes || i).image), slug: (i.attributes || i).slug }));
         }
         if (resTeam.ok) { 
              const t = await resTeam.json();
@@ -220,7 +200,7 @@ export const useCobaltData = () => {
         newData.atelierServices = await unwrap(resAtelierServices);
 
         setData(newData);
-      } catch (err) { console.error("⚠️", err); }
+      } catch (err) { console.error("⚠️ CRASH CHARGEMENT :", err); }
     };
     fetchData();
   }, []); 
