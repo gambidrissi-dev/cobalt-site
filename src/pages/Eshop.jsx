@@ -8,65 +8,53 @@ export default function Eshop({ products, collections, pageContent }) {
   const intro = pageContent?.description || "Objets manifestes, micro-séries et sélections d'outils. Fabriqué ou curaté à Biarritz.";
 
   const [activeCategory, setActiveCategory] = useState('Tout');
-  
-  // Catégories définies dans Strapi
   const categories = ['Tout', 'Mobilier', 'Deco & Maison', 'Prints', 'Outils Archi'];
 
-  // --- LOGIQUE DE TRI ---
-  // 1. On filtre d'abord par catégorie (Mobilier, Prints...)
+  // --- LOGIQUE DE TRI (Identique) ---
   const filteredProducts = useMemo(() => {
      if (activeCategory === 'Tout') return products;
      return products.filter(p => p.category === activeCategory);
   }, [products, activeCategory]);
 
-  // 2. On groupe par Collection (Drop)
-  // On ne garde que les collections qui ont des produits après filtrage
   const activeDrops = useMemo(() => {
      if (!collections) return [];
-     
      return collections.map(col => {
-        // On cherche les produits qui appartiennent à ce Drop
         const dropProducts = filteredProducts.filter(p => p.collectionId === col.id);
-        
-        if (dropProducts.length === 0) return null; // On cache le drop s'il est vide
-
-        return {
-           ...col,
-           products: dropProducts
-        };
-     }).filter(Boolean); // On retire les nulls
+        if (dropProducts.length === 0) return null;
+        return { ...col, products: dropProducts };
+     }).filter(Boolean);
   }, [collections, filteredProducts]);
 
-  // 3. Les Orphelins (Produits sans Drop)
   const orphanProducts = useMemo(() => {
       return filteredProducts.filter(p => !p.collectionId);
   }, [filteredProducts]);
 
 
-  // --- COMPOSANT CARTE PRODUIT ---
+  // --- COMPOSANT CARTE PRODUIT (DARK) ---
   const ProductCard = ({ product }) => {
-     // Logique des Badges
      const isSoldOut = product.stock === 0;
      const isUnique = product.stock === 1;
      const isLowStock = product.stock > 1 && product.stock <= 5;
 
      return (
         <Link to={`/produit/${product.id}`} className="group block relative">
-            <div className="aspect-[4/5] bg-[#F5F5F5] overflow-hidden relative mb-4">
+            <div className="aspect-[4/5] bg-[#111] overflow-hidden relative mb-4 border border-white/5">
                 
                 {/* Image */}
                 {product.image ? (
                     <img 
                       src={product.image} 
                       alt={product.name} 
-                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${isSoldOut ? 'grayscale opacity-70' : ''}`} 
+                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${isSoldOut ? 'grayscale opacity-50' : ''}`} 
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">NO IMAGE</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-700 text-xs font-mono">
+                        NO IMAGE
+                    </div>
                 )}
 
-                {/* BADGES (Le cœur de ta rareté) */}
-                <div className="absolute top-2 left-2 flex flex-col gap-2 items-start">
+                {/* BADGES */}
+                <div className="absolute top-2 left-2 flex flex-col gap-2 items-start z-10">
                     {isSoldOut && (
                         <span className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1">
                             Épuisé
@@ -83,18 +71,17 @@ export default function Eshop({ products, collections, pageContent }) {
                         </span>
                     )}
                 </div>
-
             </div>
 
             {/* Infos */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start text-white">
                 <div>
                     <h3 className="font-bold uppercase text-sm group-hover:text-[#2433FF] transition-colors">{product.name}</h3>
                     <p className="text-xs text-gray-500 mt-1 capitalize">{product.category}</p>
                 </div>
                 <div className="text-sm font-mono text-right">
                     {isSoldOut ? (
-                        <span className="text-gray-400 line-through text-xs">SOLD OUT</span>
+                        <span className="text-gray-500 line-through text-xs">SOLD OUT</span>
                     ) : (
                         <span>{product.price} €</span>
                     )}
@@ -104,16 +91,15 @@ export default function Eshop({ products, collections, pageContent }) {
      );
   };
 
-
   return (
-    <div className="min-h-screen bg-white text-black pt-32 pb-20 px-4 md:px-8">
+    <div className="min-h-screen bg-[#0A0A0C] text-white pt-32 pb-20 px-4 md:px-8">
       
       {/* HEADER */}
-      <div className="max-w-7xl mx-auto mb-16 border-b border-black pb-8 flex flex-col md:flex-row justify-between items-end gap-8">
-         <h1 className="cobalt-heading text-6xl md:text-9xl tracking-tighter leading-none">
+      <div className="max-w-7xl mx-auto mb-16 border-b border-white/20 pb-8 flex flex-col md:flex-row justify-between items-end gap-8">
+         <h1 className="cobalt-heading text-6xl md:text-9xl tracking-tighter leading-none text-white">
              {title}
          </h1>
-         <p className="md:max-w-md text-right text-gray-600 text-lg leading-relaxed">
+         <p className="md:max-w-md text-right text-gray-400 text-lg leading-relaxed">
              {intro}
          </p>
       </div>
@@ -128,7 +114,7 @@ export default function Eshop({ products, collections, pageContent }) {
                     className={`text-xs font-bold uppercase tracking-widest pb-1 border-b-2 transition-all ${
                         activeCategory === cat 
                         ? 'text-[#2433FF] border-[#2433FF]' 
-                        : 'text-gray-400 border-transparent hover:text-black'
+                        : 'text-gray-500 border-transparent hover:text-white'
                     }`}
                   >
                       {cat}
@@ -148,16 +134,16 @@ export default function Eshop({ products, collections, pageContent }) {
                         <span className="text-[#2433FF] font-mono text-xs uppercase tracking-widest mb-2 block">
                             Drop Collection
                         </span>
-                        <h2 className="text-4xl md:text-5xl font-bold uppercase leading-none">
+                        <h2 className="text-4xl md:text-5xl font-bold uppercase leading-none text-white">
                             {drop.title}
                         </h2>
                     </div>
-                    <p className="max-w-md text-sm text-gray-500 leading-relaxed text-right">
+                    <p className="max-w-md text-sm text-gray-400 leading-relaxed text-right">
                         {drop.description}
                     </p>
                 </div>
 
-                {/* Grille Produits du Drop */}
+                {/* Grille Produits */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
                     {drop.products.map((p, i) => (
                         <ScrollAnimation key={p.id} delay={i * 50}>
@@ -168,11 +154,11 @@ export default function Eshop({ products, collections, pageContent }) {
             </section>
         ))}
 
-        {/* PRODUITS HORS COLLECTION (S'il y en a) */}
+        {/* ORPHELINS */}
         {orphanProducts.length > 0 && (
             <section>
-                 <div className="mb-12 border-t border-black/10 pt-12">
-                    <h2 className="text-2xl font-bold uppercase">Les Essentiels</h2>
+                 <div className="mb-12 border-t border-white/10 pt-12">
+                    <h2 className="text-2xl font-bold uppercase text-white">Les Essentiels</h2>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
                     {orphanProducts.map((p, i) => (
@@ -184,9 +170,9 @@ export default function Eshop({ products, collections, pageContent }) {
             </section>
         )}
 
-        {/* SI RIEN NE MATCHE */}
+        {/* SI VIDE */}
         {activeDrops.length === 0 && orphanProducts.length === 0 && (
-            <div className="py-20 text-center text-gray-400 font-mono">
+            <div className="py-20 text-center text-gray-500 font-mono">
                 Aucune pièce disponible dans cette catégorie pour le moment.
             </div>
         )}
