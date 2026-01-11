@@ -27,8 +27,8 @@ import MemberDetail from './pages/MemberDetail';
 import Media from './pages/Media';
 import ArticleDetail from './pages/ArticleDetail';
 import Asso from './pages/Asso';
-import AssoDetail from './pages/AssoDetail'; // (Optionnel si tu as créé cette page)
 import Home from './pages/Home';
+import AssoDetail from './pages/AssoDetail';
 
 // 1. DÉFINITION DES ROUTES
 function AnimatedRoutes({ 
@@ -36,7 +36,7 @@ function AnimatedRoutes({
   services, atelierServices, 
   pageCobaltPlus, pageAtelier, 
   pageMedia, pageAsso, pageAgence, pageProjects, pageEshop,
-  assoPrograms, // <--- NOUVEAU : Les cartes programmes
+  assoPrograms, 
   navigation, onOpenContact 
 }) {
   const location = useLocation();
@@ -91,18 +91,26 @@ function AnimatedRoutes({
         <Route path="/media" element={<PageTransition><Media articles={articles} pageContent={pageMedia} /></PageTransition>} />
         <Route path="/article/:id" element={<PageTransition><ArticleDetail articles={articles} /></PageTransition>} />
         
-        {/* ASSO (C'est ici qu'on passe les programmes) */}
+        {/* --- ASSO --- */}
         <Route path="/asso" element={
             <PageTransition>
                 <Asso 
                     onOpenContact={onOpenContact} 
                     pageContent={pageAsso} 
-                    programs={assoPrograms} // <--- CONNEXION ICI
+                    programs={assoPrograms} 
                 />
             </PageTransition>
         } />
-        {/* Si tu as prévu une page détail pour les programmes (optionnel pour l'instant) */}
-        {/* <Route path="/asso/:id" element={<PageTransition><AssoDetail /></PageTransition>} /> */}
+        
+        {/* ROUTE DÉTAIL ACTIVÉE ICI : */}
+        <Route path="/asso/:id" element={
+            <PageTransition>
+                <AssoDetail 
+                    programs={assoPrograms} 
+                    onOpenContact={onOpenContact} 
+                />
+            </PageTransition>
+        } />
         
         {/* AGENCE */}
         <Route path="/about" element={<PageTransition><About team={team} pageContent={pageAgence} /></PageTransition>} />
@@ -122,7 +130,7 @@ function CobaltApp() {
       home, navigation, services, atelierServices,
       pageCobaltPlus, pageAtelier, 
       pageMedia, pageAsso, pageAgence, pageProjects, pageEshop,
-      assoPrograms, // <--- NOUVEAU : On récupère la liste des programmes
+      assoPrograms, 
       loading 
   } = useCobaltData();
 
@@ -195,7 +203,7 @@ function CobaltApp() {
           pageProjects={pageProjects}
           pageEshop={pageEshop}
           
-          assoPrograms={assoPrograms} // <--- ON TRANSMET ICI
+          assoPrograms={assoPrograms} 
           
           onOpenContact={() => setShowContactModal(true)}
         />

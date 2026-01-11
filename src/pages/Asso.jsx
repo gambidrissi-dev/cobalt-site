@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Plus } from 'lucide-react';
 import { ScrollAnimation } from '../components/ui/CobaltComponents';
 
-export default function Asso({ onOpenContact, pageContent, programs }) {
+export default function Asso({ onOpenContact, pageContent, progams }) {
 
   // DEBUG : Regarde ta console (F12) pour voir si ça s'affiche
   useEffect(() => {
-    console.log("📢 Programmes reçus dans la page Asso :", programs);
-  }, [programs]);
+    console.log("📢 Programmes reçus dans la page Asso :", progams);
+  }, [progams]);
 
   // 1. DONNÉES HEADER (Venant de Strapi "Page Asso")
   const title = pageContent?.pageTitle || "L'ÉCOLE DU FAIRE";
@@ -102,7 +102,7 @@ export default function Asso({ onOpenContact, pageContent, programs }) {
          ) : (
              <div className="text-center py-20 border border-white/20 text-white/50 font-mono">
                  Aucun programme trouvé... <br/> 
-                 (Vérifie Strapi : AssoProgram publié ? Permissions Public 'find' cochées ?)
+                 (Vérifie Strapi : AssoProgam publié ? Permissions Public 'find' cochées ?)
              </div>
          )}
       </div>
