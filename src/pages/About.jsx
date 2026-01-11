@@ -1,127 +1,100 @@
 import React from 'react';
-import { ArrowDown } from 'lucide-react';
-import { ScrollAnimation } from '../components/ui/CobaltComponents';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Mail, Instagram } from 'lucide-react';
+import { getStrapiMedia } from '../lib/strapi';
 
-export default function About({ team }) {
+export default function About({ team, pageContent }) {
 
-  // Données statiques si l'API n'est pas connectée
-  const staff = team && team.length > 0 ? team : [
-    { name: "Thomas Dubreuil", role: "Architecte Associé", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80" },
-    { name: "Sarah Lemoine", role: "Directrice Technique", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80" },
-    { name: "Marc Alibert", role: "Chef d'Atelier", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&q=80" },
-    { name: "Elise Faure", role: "Architecte DE", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80" },
-    { name: "Julien Moreau", role: "Conducteur de Travaux", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80" },
-    { name: "Clara Besson", role: "Designer Mobilier", image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800&q=80" },
-  ];
+  // 1. Données de la page (Haut)
+  const title = pageContent?.pageTitle || "L'AGENCE";
+  const description = pageContent?.description || "Collectif d'architecture et de design basé entre Biarritz et Bordeaux. Nous concevons des espaces vivants et durables.";
+  const email = pageContent?.email || "contact@collectifcobalt.eu";
+  const instagram = pageContent?.instagram || "https://instagram.com";
+  
+  const coverImage = pageContent?.cover?.data?.attributes?.url 
+    ? getStrapiMedia(pageContent.cover.data.attributes.url)
+    : null;
 
-  const stats = [
-    { value: "12", label: "Années d'existence" },
-    { value: "45", label: "Projets livrés" },
-    { value: "2", label: "Ateliers (Biarritz & Bdx)" },
-    { value: "100%", label: "Indépendance" },
-  ];
+  // 2. Helper pour l'image des membres
+  const getMemberImage = (member) => {
+      const img = member.attributes?.photo?.data?.attributes?.url || member.photo?.data?.attributes?.url;
+      return img ? getStrapiMedia(img) : null;
+  };
 
   return (
-    <div className="animate-fade-in min-h-screen pt-32 pb-24 px-6 relative bg-[#0A0A0C] text-white">
+    <div className="min-h-screen bg-[#0A0A0C] text-white pt-32 pb-20 px-4 md:px-8">
       
-      {/* 1. HERO SECTION : LE MANIFESTE */}
-      <div className="max-w-7xl mx-auto mb-32 border-b border-white/10 pb-24">
-         <div className="grid md:grid-cols-2 gap-16 items-start">
-            
-            {/* Titre Collant */}
-            <div className="sticky top-32">
-               <span className="text-[#2433FF] font-bold text-xs uppercase tracking-widest mb-4 block">L'Agence</span>
-               <h1 className="cobalt-heading text-6xl md:text-8xl leading-none mb-8">
-                  ARCHI<br/>TECTES<br/>CONSTR<br/>UCTEURS.
-               </h1>
-               <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center animate-bounce mt-12">
-                  <ArrowDown className="w-5 h-5" />
-               </div>
+      {/* --- HEADER AGENCE --- */}
+      <div className="max-w-7xl mx-auto mb-20 grid md:grid-cols-2 gap-12 items-end">
+         <div>
+            <span className="text-[#2433FF] font-mono text-sm tracking-widest uppercase mb-4 block">
+                À propos
+            </span>
+            <h1 className="cobalt-heading text-6xl md:text-9xl mb-6">
+                {title}
+            </h1>
+         </div>
+         <div className="md:pb-4">
+            <p className="text-xl md:text-2xl font-light text-gray-300 leading-relaxed mb-8">
+                {description}
+            </p>
+            <div className="flex gap-6">
+                <a href={`mailto:${email}`} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors">
+                    <Mail size={16} /> Nous écrire
+                </a>
+                <a href={instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-[#2433FF] transition-colors">
+                    <Instagram size={16} /> Instagram
+                </a>
             </div>
-
-            {/* Texte Manifeste */}
-            <div className="pt-2">
-               <p className="text-2xl md:text-3xl font-light leading-relaxed mb-12 text-white/90">
-                  Nous avons supprimé la frontière entre le bureau d'études et l'atelier. 
-                  <span className="text-[#2433FF]"> Nous dessinons ce que nous savons construire.</span>
-               </p>
-               <div className="space-y-8 text-gray-400 leading-relaxed text-lg">
-                  <p>
-                     Le Collectif Cobalt est né d'un constat simple : l'architecture perd son sens quand elle s'éloigne de la matière. 
-                     C'est pourquoi nous avons intégré notre propre atelier de fabrication.
-                  </p>
-                  <p>
-                     Cette double casquette nous permet de maîtriser la chaîne complète, du permis de construire jusqu'à la pose 
-                     du dernier élément de mobilier. Nous garantissons ainsi les coûts, les délais, et surtout la qualité du détail.
-                  </p>
-               </div>
-
-               {/* Stats Grid */}
-               <div className="grid grid-cols-2 gap-8 mt-16 border-t border-white/10 pt-16">
-                  {stats.map((stat, i) => (
-                    <div key={i}>
-                       <span className="block text-4xl md:text-5xl font-bold font-mono mb-2">{stat.value}</span>
-                       <span className="text-xs uppercase tracking-widest text-gray-500">{stat.label}</span>
-                    </div>
-                  ))}
-               </div>
-            </div>
-
          </div>
       </div>
 
-      {/* 2. L'ÉQUIPE (GRID) */}
-      <div className="max-w-7xl mx-auto mb-32">
-         <div className="flex items-end justify-between mb-16">
-            <h2 className="cobalt-heading text-5xl md:text-6xl">L'ÉQUIPE</h2>
-            <p className="text-right text-sm text-gray-500 hidden md:block">
-               Biarritz & Bordeaux<br/>France
-            </p>
-         </div>
+      {/* --- IMAGE DE COUVERTURE --- */}
+      {coverImage && (
+          <div className="max-w-7xl mx-auto mb-32 aspect-[21/9] bg-gray-900 overflow-hidden relative group">
+              <div className="absolute inset-0 bg-[#2433FF]/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-multiply"></div>
+              <img 
+                src={coverImage} 
+                alt="L'agence" 
+                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
+              />
+          </div>
+      )}
 
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-16">
-            {staff.map((member, i) => (
-               <ScrollAnimation key={i} delay={i * 50} animation="slide-up">
-                  <div className="group cursor-pointer">
-                     {/* Photo */}
-                     <div className="aspect-[3/4] overflow-hidden bg-gray-900 mb-6 relative">
-                        {/* Overlay couleur au survol */}
-                        <div className="absolute inset-0 bg-[#2433FF] opacity-0 group-hover:opacity-20 transition-opacity duration-500 z-10 mix-blend-overlay"></div>
-                        <img 
-                           src={member.image} 
-                           alt={member.name} 
-                           className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-100 group-hover:scale-105" 
-                        />
-                     </div>
-                     {/* Infos */}
-                     <div className="border-t border-white/10 pt-4 flex justify-between items-start">
-                        <div>
-                           <h3 className="text-xl font-bold mb-1 group-hover:text-[#2433FF] transition-colors">{member.name}</h3>
-                           <p className="text-sm text-gray-500 font-mono uppercase tracking-wider">{member.role}</p>
-                        </div>
-                     </div>
-                  </div>
-               </ScrollAnimation>
-            ))}
-         </div>
-      </div>
+      {/* --- L'ÉQUIPE (TEAM) --- */}
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center gap-4 mb-12 border-b border-white/10 pb-4">
+            <h2 className="text-2xl font-bold">L'ÉQUIPE</h2>
+            <div className="h-px bg-white/10 flex-grow"></div>
+        </div>
 
-      {/* 3. LES BUREAUX (IMAGE FULL WIDTH) */}
-      <div className="w-full h-[60vh] relative overflow-hidden mb-24 grayscale hover:grayscale-0 transition-all duration-1000">
-         <img 
-            src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80" 
-            alt="Nos Bureaux" 
-            className="w-full h-full object-cover"
-         />
-         <div className="absolute bottom-0 left-0 bg-black/50 backdrop-blur-md p-8 md:p-12 border-t border-r border-white/20">
-            <h3 className="text-2xl font-bold mb-4">Venez nous voir</h3>
-            <p className="text-gray-300 mb-6 max-w-md">
-               Nos ateliers sont ouverts aux visites sur rendez-vous. Venez découvrir nos prototypes et rencontrer l'équipe.
-            </p>
-            <button className="text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:text-[#2433FF] hover:border-[#2433FF] transition-colors">
-               Prendre rendez-vous
-            </button>
-         </div>
+        {team && team.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {team.map((member) => {
+                    const data = member.attributes || member;
+                    const id = member.id;
+                    const imgUrl = getMemberImage(member);
+
+                    return (
+                        <Link key={id} to={`/equipe/${id}`} className="group block">
+                            <div className="aspect-[3/4] bg-[#111] mb-4 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-500">
+                                {imgUrl ? (
+                                    <img src={imgUrl} alt={data.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-700 text-xs uppercase">Photo à venir</div>
+                                )}
+                            </div>
+                            <h3 className="text-lg font-bold group-hover:text-[#2433FF] transition-colors">{data.name}</h3>
+                            <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">{data.role}</p>
+                        </Link>
+                    );
+                })}
+            </div>
+        ) : (
+            <div className="text-center py-20 border border-white/10 text-gray-500">
+                L'équipe est en cours de constitution sur Strapi.
+            </div>
+        )}
       </div>
 
     </div>
