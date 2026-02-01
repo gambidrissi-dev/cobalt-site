@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Hammer, Euro, PenTool, CheckCircle2 } from 'lucide-react';
+import { getStrapiMedia } from '../lib/strapi';
 
 export default function AtelierSavoirFaire({ content }) {
   
@@ -27,7 +28,12 @@ export default function AtelierSavoirFaire({ content }) {
       <div className="max-w-5xl mx-auto grid grid-cols-1 gap-6">
         
         {list.length > 0 ? (
-          list.map((item, index) => (
+          list.map((item, index) => {
+            const imageUrl = item.image?.data?.attributes?.url 
+              ? getStrapiMedia(item.image.data.attributes.url) 
+              : (item.image?.url ? getStrapiMedia(item.image.url) : null);
+
+            return (
             <div 
               key={index} 
               className="group bg-[#111113] border border-white/10 rounded-xl p-6 md:p-8 hover:border-white transition-all duration-300 relative overflow-hidden"
@@ -39,6 +45,15 @@ export default function AtelierSavoirFaire({ content }) {
                 
                 {/* BLOC GAUCHE */}
                 <div className="md:w-1/3 flex flex-col">
+                   {imageUrl && (
+                      <div className="mb-6 aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-gray-900">
+                         <img 
+                           src={imageUrl} 
+                           alt={item.title} 
+                           className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 grayscale group-hover:grayscale-0" 
+                         />
+                      </div>
+                   )}
                    <div className="flex items-center gap-3 mb-4">
                       <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center text-white">
                         <Hammer size={16} />
@@ -86,7 +101,7 @@ export default function AtelierSavoirFaire({ content }) {
 
               </div>
             </div>
-          ))
+          )})
         ) : (
           <div className="text-center py-20 text-gray-500 font-mono">
             Les prestations de l'atelier sont en cours de création sur Strapi.
