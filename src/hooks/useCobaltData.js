@@ -63,7 +63,7 @@ export const useCobaltData = () => {
           fetch(`${STRAPI_URL}/api/navigation?populate=*`),
           fetch(`${STRAPI_URL}/api/homepage?populate[hero][populate]=*&populate[blocks][populate]=*`),
 
-          fetch(`${STRAPI_URL}/api/page-prestations-archi?populate=*`),
+          fetch(`${STRAPI_URL}/api/page-prestations-archi?populate[listePrestations][populate]=image`),
           fetch(`${STRAPI_URL}/api/page-savoir-faire?populate=*`),
           fetch(`${STRAPI_URL}/api/page-cobalt-plus?populate[cards][populate]=image`),
           fetch(`${STRAPI_URL}/api/page-atelier?populate[cards][populate]=image`),
