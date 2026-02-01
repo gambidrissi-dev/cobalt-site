@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Clock, Euro, FileText, CheckCircle2 } from 'lucide-react';
+import { getStrapiMedia } from '../lib/strapi';
 
 export default function Services({ servicesContent }) {
   
@@ -26,7 +27,13 @@ export default function Services({ servicesContent }) {
       <div className="max-w-5xl mx-auto grid grid-cols-1 gap-6">
         
         {list.length > 0 ? (
-          list.map((item, index) => (
+          list.map((item, index) => {
+            // Récupération de l'image (compatible Strapi v4/v5)
+            const imageUrl = item.image?.data?.attributes?.url 
+              ? getStrapiMedia(item.image.data.attributes.url) 
+              : (item.image?.url ? getStrapiMedia(item.image.url) : null);
+
+            return (
             <div 
               key={index} 
               className="group bg-[#111113] border border-white/10 rounded-xl p-6 md:p-8 hover:border-[#2433FF] transition-all duration-300 relative overflow-hidden"
@@ -38,6 +45,17 @@ export default function Services({ servicesContent }) {
                 
                 {/* BLOC GAUCHE : IDENTITÉ */}
                 <div className="md:w-1/3 flex flex-col">
+                   {/* Image de la prestation */}
+                   {imageUrl && (
+                      <div className="mb-6 aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-gray-900">
+                         <img 
+                           src={imageUrl} 
+                           alt={item.title} 
+                           className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 grayscale group-hover:grayscale-0" 
+                         />
+                      </div>
+                   )}
+
                    <div className="flex items-center gap-3 mb-4">
                       {/* Pastille Icône (Tu peux la rendre dynamique via Strapi si tu veux) */}
                       <div className="w-8 h-8 rounded bg-[#2433FF]/20 flex items-center justify-center text-[#2433FF]">
@@ -89,7 +107,7 @@ export default function Services({ servicesContent }) {
 
               </div>
             </div>
-          ))
+          )})
         ) : (
           <div className="text-center py-20 text-gray-500 font-mono">
             Aucune prestation chargée depuis Strapi pour le moment.
