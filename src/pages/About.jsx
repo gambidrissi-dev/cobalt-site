@@ -44,9 +44,9 @@ export default function About({ team, pageContent }) {
 
       {/* COVER */}
       {coverImage && (
-          <div className="max-w-7xl mx-auto mb-32 aspect-[21/9] bg-gray-900 overflow-hidden relative group">
+          <div className="max-w-7xl mx-auto mb-32 relative group">
               <div className="absolute inset-0 bg-[#2433FF]/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-multiply"></div>
-              <img src={coverImage} alt="Agence" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+              <img src={coverImage} alt="Agence" className="w-full h-auto grayscale group-hover:grayscale-0 transition-all duration-700" />
           </div>
       )}
 
