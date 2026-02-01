@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ScrollAnimation } from '../components/ui/CobaltComponents';
 
 // ICI : On ajoute bien 'programs' dans les accolades
@@ -65,14 +64,17 @@ export default function Asso({ onOpenContact, pageContent, programs }) {
                   <ScrollAnimation key={item.id} delay={i * 100} animation="slide-up">
                     
                     <Link to={`/asso/${item.id}`} className="group border border-white/30 hover:border-white bg-[#2433FF] transition-colors duration-300 flex flex-col h-full cursor-pointer">
+                    <div className="group border border-white/30 bg-[#2433FF] flex flex-col h-full">
                        
                        <div className="aspect-[4/3] overflow-hidden border-b border-white/30 relative">
                           <div className="absolute inset-0 bg-[#2433FF]/40 group-hover:bg-transparent transition-all duration-500 z-10 mix-blend-multiply"></div>
+                          <div className="absolute inset-0 bg-[#2433FF]/40 z-10 mix-blend-multiply"></div>
                           {item.image ? (
                               <img 
                                 src={item.image} 
                                 alt={item.title} 
                                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
+                                className="w-full h-full object-cover grayscale" 
                               />
                           ) : (
                               <div className="w-full h-full flex items-center justify-center bg-black/20 text-xs font-mono opacity-50">IMAGE MANQUANTE</div>
@@ -84,6 +86,7 @@ export default function Asso({ onOpenContact, pageContent, programs }) {
                           <span className="text-xs font-mono uppercase tracking-widest opacity-60 mb-6 block">{item.subtitle}</span>
                           
                           <p className="opacity-80 leading-relaxed mb-8 flex-grow text-sm line-clamp-4">
+                          <p className="opacity-80 leading-relaxed flex-grow text-sm">
                             {item.description}
                           </p>
 
@@ -94,6 +97,7 @@ export default function Asso({ onOpenContact, pageContent, programs }) {
                        </div>
 
                     </Link>
+                    </div>
                   </ScrollAnimation>
                 ))}
              </div>
