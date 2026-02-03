@@ -7,6 +7,7 @@ export default function Media({ articles = [], pageContent }) {
   
   // 1. Infos Strapi (Page Config)
   const pageTitle = pageContent?.pageTitle || "LE MÉDIA";
+  const highlightTitle = pageContent?.highlightTitle;
   // On récupère l'ID de l'article mis en avant dans Strapi (s'il existe)
   const strapiFeaturedId = pageContent?.featured_article?.data?.id;
 
@@ -64,8 +65,16 @@ export default function Media({ articles = [], pageContent }) {
               {pageTitle}
             </h1>
             <div className="hidden md:block text-right">
-               <span className="block font-bold text-sm uppercase tracking-widest text-[#2433FF]">Journal d'Architecture</span>
-               <span className="block text-xs font-mono text-gray-500 mt-1">ISSN 2025-COBALT</span>
+               {highlightTitle ? (
+                 <span className="block font-bold text-sm uppercase tracking-widest text-[#2433FF] max-w-xs ml-auto">
+                   {highlightTitle}
+                 </span>
+               ) : (
+                 <>
+                   <span className="block font-bold text-sm uppercase tracking-widest text-[#2433FF]">Journal d'Architecture</span>
+                   <span className="block text-xs font-mono text-gray-500 mt-1">ISSN 2025-COBALT</span>
+                 </>
+               )}
             </div>
          </div>
       </div>
