@@ -84,9 +84,9 @@ export default function ArticleDetail({ articles }) {
              {/* Corps du texte */}
              <div className="prose prose-lg prose-headings:font-bold prose-a:text-[#2433FF] text-gray-600 font-serif leading-loose">
                 {/* On simule des paragraphes avec split si c'est du texte brut */}
-                {article.content ? article.content.split('\n').map((paragraph, idx) => (
+                {article.content && typeof article.content === 'string' ? article.content.split('\n').map((paragraph, idx) => (
                    <p key={idx} className="mb-6">{paragraph}</p>
-                )) : (
+                )) : article.content ? <p>Contenu non textuel (Blocks JSON détecté)</p> : (
                    <p>Contenu en cours de rédaction...</p>
                 )}
              </div>

@@ -188,15 +188,30 @@ export const useCobaltData = () => {
                 newData.articles = d.data.map(i => {
                     // On fusionne l'ID et les attributs s'ils existent, sinon on prend l'objet brut (Strapi v5)
                     const itemData = i.attributes ? { id: i.id, ...i.attributes } : i;
+                    
+                    // Gestion intelligente de la date (champ manuel 'date' ou automatique 'publishedAt')
+                    let finalDate = itemData.date;
+                    if (!finalDate && itemData.publishedAt) {
+                        try {
+                            finalDate = new Date(itemData.publishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+                        } catch(e) {}
+                    }
+
                     return {
                         ...itemData,
                         id: i.documentId || i.id,
+                        // Sécurisation des champs (évite les bugs si un champ est vide)
+                        title: itemData.title || "Sans titre",
+                        category: itemData.category || itemData.Category || "Architecture",
+                        date: finalDate || "Date inconnue",
                         // On essaie de trouver l'image dans 'cover' ou 'image'
                         image: makeUrl(itemData.cover?.data || itemData.cover || itemData.image?.data || itemData.image)
                     };
                 });
-                console.log(`📰 ${newData.articles.length} Articles chargés :`, newData.articles);
+                console.log(`📰 ${newData.articles.length} Articles chargés. Premier item :`, newData.articles[0]);
             }
+        } else {
+            console.error(`❌ ÉCHEC CHARGEMENT ARTICLES : ${resArticles.status} ${resArticles.statusText} (Vérifiez Settings > Roles > Public > Article > Find)`);
         }
 
         newData.navigation = (await unwrap(resNav))?.mainNavigation || [];
