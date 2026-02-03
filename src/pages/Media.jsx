@@ -15,49 +15,43 @@ export default function Media({ articles = [], pageContent }) {
 
   // 3. Calcul des Catégories (Basé sur les articles réels)
   const categories = useMemo(() => {
-    if (!articles) return ['Tout'];
-    // On récupère toutes les catégories uniques présentes dans les articles
-    const allCats = articles.map(a => a.category).filter(Boolean);
+    const safeArticles = articles || [];
+    if (safeArticles.length === 0) return ['Tout'];
+    const allCats = safeArticles.map(a => a.category).filter(Boolean);
     return ['Tout', ...new Set(allCats)];
   }, [articles]);
 
-  // 4. Logique de "Une" et de "Liste" (Le cœur du réacteur)
+  // 4. Logique de "Une" et de "Liste"
   const { featured, others } = useMemo(() => {
-    if (!articles || articles.length === 0) return { featured: null, others: [] };
+    const safeArticles = articles || [];
+    if (safeArticles.length === 0) return { featured: null, others: [] };
 
-    let filtered = articles;
+    let filtered = safeArticles;
 
     // A. Filtrage par catégorie
     if (activeCategory !== 'Tout') {
-      filtered = articles.filter(a => a.category === activeCategory);
-      // Si on filtre, le premier de la liste filtrée devient la une
+      filtered = safeArticles.filter(a => a.category === activeCategory);
       return {
         featured: filtered[0],
         others: filtered.slice(1)
       };
     }
 
-    // B. Si Catégorie "Tout" -> On respecte le choix Strapi
-    // On cherche l'article choisi dans l'admin
+    // B. Si Catégorie "Tout"
     let topArticle = null;
-    
     if (strapiFeaturedId) {
-       topArticle = articles.find(a => a.id === strapiFeaturedId);
+       topArticle = safeArticles.find(a => a.id === strapiFeaturedId);
     }
-
-    // Fallback : Si pas de choix Strapi (ou article supprimé), on prend le plus récent
     if (!topArticle) {
-       topArticle = articles[0];
+       topArticle = safeArticles[0];
     }
 
-    // La liste "Others" contient tout sauf la "Une"
-    const rest = articles.filter(a => a.id !== topArticle.id);
+    const rest = safeArticles.filter(a => a.id !== topArticle.id);
 
     return {
       featured: topArticle,
       others: rest
     };
-
   }, [articles, activeCategory, strapiFeaturedId]);
 
   return (

@@ -13,39 +13,16 @@ export default function ArticleDetail({ articles }) {
   }, [id]);
 
   // --- DONNÉES DE SECOURS (MOCK) ---
-  // Pour que la page marche même si tu cliques sur un lien "en dur"
-  const allArticles = articles || [
-    {
-        id: "architecture-radicale",
-        title: "Vers une architecture radicale",
-        category: "Réflexion",
-        date: "30 DEC 2024",
-        author: "Thomas Dubreuil",
-        readTime: "5 min",
-        image: "https://images.unsplash.com/photo-1517544845501-bb78ccdad008?w=1200&q=80",
-        intro: "Comment repenser l'habitat collectif à l'heure de la densification urbaine ? Une approche sans concession sur la matière et l'usage.",
-        content: `L'architecture contemporaine se trouve à un carrefour décisif. Face à l'urgence climatique et à la crise du logement, la réponse ne peut plus être uniquement technologique. Elle doit être structurelle, sociale et radicale.
-        
-        Nous croyons en un retour aux fondamentaux : la matière brute, la lumière naturelle et la ventilation passive. Il ne s'agit pas de nostalgie, mais de bon sens constructif. Construire en pierre massive ou en béton de chanvre n'est pas un luxe, c'est une nécessité pour garantir la pérennité de nos ouvrages.
-        
-        Dans nos projets récents, nous avons cherché à supprimer tout superflu. Pas de faux-plafonds, pas de doublages inutiles. La structure est l'architecture. Cela demande une rigueur d'exécution absolue, car rien ne peut être caché.`
-    },
-    // Fallback générique si l'ID ne matche pas
-    {
-       id: "beton-chanvre",
-       title: "Le retour du béton de chanvre",
-       category: "Matériaux",
-       date: "28 DEC 2024", 
-       author: "Sarah Lemoine",
-       readTime: "3 min",
-       image: "https://images.unsplash.com/photo-1591955506264-3f51322ab2af?w=800&q=80",
-       intro: "Le béton de chanvre offre une alternative biosourcée crédible.",
-       content: "Lorem ipsum dolor sit amet..."
-    }
-  ];
+  const allArticles = articles || [];
 
   // Trouver l'article ou prendre le premier par défaut (pour éviter la page blanche)
-  const article = allArticles.find(a => a.id === id) || allArticles[0];
+  const article = allArticles.find(a => a.id === id);
+
+  if (!article) return (
+    <div className="min-h-screen bg-white flex items-center justify-center pt-32">
+        <p className="text-black font-mono">Article introuvable.</p>
+    </div>
+  );
 
   return (
     <div className="animate-fade-in min-h-screen bg-white text-black selection:bg-[#2433FF] selection:text-white pt-24 md:pt-32 pb-24">

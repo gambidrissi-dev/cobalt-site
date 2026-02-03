@@ -20,7 +20,7 @@ const makeUrl = (data) => {
 export const useCobaltData = () => {
   const [data, setData] = useState({
     projects: staticProjects,
-    articles: staticArticles,
+    articles: [],
     products: staticProducts, 
     shopCollections: [], 
     team: staticTeam,
