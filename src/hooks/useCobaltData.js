@@ -184,7 +184,19 @@ export const useCobaltData = () => {
         }
         if (resArticles.ok) {
             const d = await resArticles.json();
-            if (d.data) newData.articles = d.data.map(i => ({ id: i.id || i.documentId, ...i.attributes, image: makeUrl(i.attributes?.cover?.data || i.attributes?.cover) }));
+            if (d.data) {
+                newData.articles = d.data.map(i => {
+                    // On fusionne l'ID et les attributs s'ils existent, sinon on prend l'objet brut (Strapi v5)
+                    const itemData = i.attributes ? { id: i.id, ...i.attributes } : i;
+                    return {
+                        ...itemData,
+                        id: i.documentId || i.id,
+                        // On essaie de trouver l'image dans 'cover' ou 'image'
+                        image: makeUrl(itemData.cover?.data || itemData.cover || itemData.image?.data || itemData.image)
+                    };
+                });
+                console.log(`📰 ${newData.articles.length} Articles chargés :`, newData.articles);
+            }
         }
 
         newData.navigation = (await unwrap(resNav))?.mainNavigation || [];
