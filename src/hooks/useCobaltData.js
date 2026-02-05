@@ -202,10 +202,11 @@ export const useCobaltData = () => {
                         id: i.documentId || i.id,
                         // Sécurisation des champs (évite les bugs si un champ est vide)
                         title: itemData.title || "Sans titre",
-                        category: itemData.category || itemData.Category || "Architecture",
+                        category: itemData.source || itemData.category || itemData.Category || "Architecture",
                         date: finalDate || "Date inconnue",
                         // On essaie de trouver l'image dans 'cover' ou 'image'
-                        image: makeUrl(itemData.cover?.data || itemData.cover || itemData.image?.data || itemData.image)
+                        image: makeUrl(itemData.cover?.data || itemData.cover || itemData.image?.data || itemData.image),
+                        visibility: itemData.visibility
                     };
                 });
                 console.log(`📰 ${newData.articles.length} Articles chargés. Premier item :`, newData.articles[0]);

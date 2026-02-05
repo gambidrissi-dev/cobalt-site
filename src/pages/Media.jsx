@@ -8,52 +8,42 @@ export default function Media({ articles = [], pageContent }) {
   // 1. Infos Strapi (Page Config)
   const pageTitle = pageContent?.pageTitle || "LE MÉDIA";
   const highlightTitle = pageContent?.highlightTitle;
-  // On récupère l'ID de l'article mis en avant dans Strapi (s'il existe)
-  const strapiFeaturedId = pageContent?.featured_article?.data?.id;
 
-  // 2. Gestion du Filtre
+  // 2. Filtrage (Visibilité & Catégories)
   const [activeCategory, setActiveCategory] = useState('Tout');
 
-  // 3. Calcul des Catégories (Basé sur les articles réels)
-  const categories = useMemo(() => {
-    const safeArticles = articles || [];
-    if (safeArticles.length === 0) return ['Tout'];
-    const allCats = safeArticles.map(a => a.category).filter(Boolean);
-    return ['Tout', ...new Set(allCats)];
+  // On ne garde que les articles visibles (visibility !== false)
+  const visibleArticles = useMemo(() => {
+    return (articles || []).filter(a => a.visibility !== false);
   }, [articles]);
 
-  // 4. Logique de "Une" et de "Liste"
+  // Calcul des catégories disponibles (basé sur le champ 'source')
+  const categories = useMemo(() => {
+    if (visibleArticles.length === 0) return ['Tout'];
+    const allCats = visibleArticles.map(a => a.category).filter(Boolean);
+    return ['Tout', ...new Set(allCats)];
+  }, [visibleArticles]);
+
+  // 3. Logique d'affichage (Une vs Liste)
   const { featured, others } = useMemo(() => {
-    const safeArticles = articles || [];
-    if (safeArticles.length === 0) return { featured: null, others: [] };
+    if (visibleArticles.length === 0) return { featured: null, others: [] };
 
-    let filtered = safeArticles;
+    let filtered = visibleArticles;
 
-    // A. Filtrage par catégorie
+    // Filtrage par onglet
     if (activeCategory !== 'Tout') {
-      filtered = safeArticles.filter(a => a.category === activeCategory);
-      return {
-        featured: filtered[0],
-        others: filtered.slice(1)
-      };
+      filtered = visibleArticles.filter(a => a.category === activeCategory);
     }
 
-    // B. Si Catégorie "Tout"
-    let topArticle = null;
-    if (strapiFeaturedId) {
-       topArticle = safeArticles.find(a => a.id === strapiFeaturedId);
-    }
-    if (!topArticle) {
-       topArticle = safeArticles[0];
-    }
-
-    const rest = safeArticles.filter(a => a.id !== topArticle.id);
+    // Le premier de la liste filtrée est automatiquement à la une
+    const topArticle = filtered[0];
+    const rest = filtered.slice(1);
 
     return {
       featured: topArticle,
       others: rest
     };
-  }, [articles, activeCategory, strapiFeaturedId]);
+  }, [visibleArticles, activeCategory]);
 
   return (
     <div className="animate-fade-in min-h-screen pt-32 pb-24 px-6 relative bg-white text-black selection:bg-[#2433FF] selection:text-white">
